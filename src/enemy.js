@@ -6,6 +6,19 @@ import { MAP_WIDTH, MAP_HEIGHT } from './camera.js';
 import {player} from "./player.js";
 import {obstacles} from "./obstacles.js"; // <-- import map dimensions
 
+// Example paths to your enemy sprite sheets
+// (same format as player, each 128x128 per frame, horizontal frames)
+const enemyIdleImage = new Image();
+enemyIdleImage.src = 'assets/enemy_idle.png';  // e.g. 5 frames -> 640x128
+
+const enemyWalkImage = new Image();
+enemyWalkImage.src = 'assets/enemy_walk.png';  // e.g. 6 frames -> 768x128
+
+// Constants for sprite frames
+const SPRITE_SIZE = 128;   // each frame is 128 wide, 128 tall
+const IDLE_FRAMES = 5;     // e.g., 5 frames
+const WALK_FRAMES = 6;     // e.g., 6 frames
+
 /**
  * Spawns a wave of enemies in a radial pattern around the center of the *map*,
  * not just the 800x600 canvas.
@@ -38,7 +51,14 @@ export function spawnWave(count, waveNumber) {
             hp: 1 + waveNumber * 0.2,
 
             vx: 0,
-            vy: 0
+            vy: 0,
+
+            // --- Animation ---
+            animationState: 'walk',  // or 'idle'
+            frameIndex: 0,
+            frameTimer: 0,
+            frameInterval: 10,       // how fast to cycle frames
+            facingRight: true        // we’ll flip if false
         });
     }
 }
@@ -63,6 +83,11 @@ export function updateEnemies(delta, player) {
             enemy.x += (dx / dist) * enemy.speed;
             enemy.y += (dy / dist) * enemy.speed;
         }
+
+        enemy.facingRight = player.x >= enemy.x;
+
+        // Hardcode to always 'walk' if you want them always moving
+        enemy.animationState = 'walk';
 
         // -- Add knockback velocity (vx, vy) --
         enemy.x += enemy.vx;
@@ -91,6 +116,18 @@ export function updateEnemies(delta, player) {
             if (isColliding(enemies[i], enemies[j])) {
                 separate(enemies[i], enemies[j]);
             }
+        }
+    }
+}
+
+function updateEnemyAnimation(enemy) {
+    enemy.frameTimer++;
+    if (enemy.frameTimer >= enemy.frameInterval) {
+        enemy.frameTimer = 0;
+        if (enemy.animationState === 'walk') {
+            enemy.frameIndex = (enemy.frameIndex + 1) % WALK_FRAMES;
+        } else {
+            enemy.frameIndex = (enemy.frameIndex + 1) % IDLE_FRAMES;
         }
     }
 }
@@ -142,11 +179,48 @@ function getOverlap(e1, e2) {
  * Draw all enemies
  */
 export function drawEnemies(ctx) {
-    ctx.fillStyle = 'blue';
     enemies.forEach(enemy => {
-        ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+        ctx.save();
+
+        // Pick which sprite sheet
+        const sheet = (enemy.animationState === 'walk') ? enemyWalkImage : enemyIdleImage;
+        const frames = (enemy.animationState === 'walk') ? WALK_FRAMES : IDLE_FRAMES;
+
+        // Which frame?
+        const sourceX = enemy.frameIndex * SPRITE_SIZE;
+        const sourceY = 0;
+
+        // We want to draw the 128x128 sprite, possibly flipping
+        // We can offset the draw so the enemy.x,y is near the center or feet
+        // For example:
+        const drawX = enemy.x - 48; // shift left so collision box is smaller
+        const drawY = enemy.y - 96;
+        const drawWidth = SPRITE_SIZE;
+        const drawHeight = SPRITE_SIZE;
+
+        // Translate to sprite center for flipping
+        ctx.translate(drawX + drawWidth/2, drawY + drawHeight/2);
+        if (!enemy.facingRight) {
+            // Flip horizontally
+            ctx.scale(-1, 1);
+        }
+        // Now the top-left corner is at (-drawWidth/2, -drawHeight/2)
+        ctx.drawImage(
+            sheet,
+            sourceX,
+            sourceY,
+            SPRITE_SIZE,
+            SPRITE_SIZE,
+            -drawWidth/2,
+            -drawHeight/2,
+            drawWidth,
+            drawHeight
+        );
+
+        ctx.restore();
     });
 }
+
 
 /**
  * Return the nearest enemy to the player

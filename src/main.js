@@ -3,7 +3,7 @@
  ******************************************************/
 import { keys, setupInput } from './input.js';
 import { initAudio } from './sound.js';
-import { camera, updateCamera } from './camera.js';
+import {camera, MAP_HEIGHT, MAP_WIDTH, updateCamera} from './camera.js';
 import {
     player,
     updatePlayer,
@@ -31,17 +31,31 @@ import {drawObstacles, spawnObstacles} from "./obstacles.js";
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+const floorTile = new Image();
+floorTile.src = 'assets/floor.jpg'; // path to your 32x32 tile
+let floorPattern = null;
+
 // -- For normal FPS tracking (display only) --
 let fps = 0;
 
 // -- Wave info --
 let waveNumber = 1;
 let enemiesToSpawn = 12;
-const timeBetweenWaves = 30000; // e.g. 30 seconds
+const timeBetweenWaves = 10000; // e.g. 30 seconds
 let lastWaveTime = 0;
 
 // -- Player stats (kill count, etc.) --
 let kills = 0;
+
+// Wait until the image is loaded before creating the pattern
+floorTile.onload = () => {
+    // We'll need a canvas or a context to call createPattern
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // create the pattern
+    floorPattern = tempCtx.createPattern(floorTile, 'repeat');
+};
 
 // -- Pause control (for level-up menus, etc.) --
 export let isPaused = false;
@@ -113,6 +127,9 @@ function draw() {
     // Apply negative camera offset, so camera.x/camera.y is the top-left
     ctx.translate(-camera.x, -camera.y);
 
+    // 1) Draw the floor (3200x3200) using the pattern
+    drawFloor(ctx);
+
     drawObstacles(ctx);
 
     // Draw player
@@ -141,6 +158,15 @@ function draw() {
 
     // Display current FPS
     drawFPS(ctx, fps, 10, 20);
+}
+
+function drawFloor(ctx) {
+    if (!floorPattern) return; // pattern not ready yet
+
+    ctx.save();
+    ctx.fillStyle = floorPattern;
+    ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+    ctx.restore();
 }
 
 /******************************************************
