@@ -14,6 +14,12 @@ const btnUpgradeMove = document.getElementById('btnUpgradeMove');
 const btnUpgradeMaxHP = document.getElementById('btnUpgradeMaxHP');
 const btnUpgradeRange = document.getElementById('btnUpgradeRange');
 
+// Create Image objects
+const idleImage = new Image();
+idleImage.src = 'assets/idle.png'; // path to your idle sprite sheet
+
+const walkImage = new Image();
+walkImage.src = 'assets/walk.png'; // path to your walk sprite sheet
 
 // The player object
 export const player = {
@@ -33,11 +39,24 @@ export const player = {
     skillPoints: 0,
 
     attackRange: 250,
+
+    // Animation tracking
+    animationState: 'idle',  // could be 'idle' or 'walk'
+    frameIndex: 0,           // which frame we’re on
+    frameTimer: 0,           // accumulates delta time (or steps)
+    frameInterval: 10,       // how often to advance frame (bigger => slower anim)
+
+    facingRight: true,       // if false, we flip horizontally
 };
 
 const ATTACK_SPEED_UP = 50;
 const MOVE_SPEED_UP = 0.5;
 const MAX_HP_UP = 1;
+
+// For reference, each idle frame is 128x128, total frames = 5
+const IDLE_FRAMES = 5;
+const WALK_FRAMES = 6;
+const SPRITE_SIZE = 128; // each frame is 128 wide, 128 tall
 
 // Button event listeners
 btnUpgradeAttack.addEventListener('click', () => {
@@ -74,27 +93,54 @@ btnUpgradeRange.addEventListener('click', () => {
     }
 });
 
+function updateAnimation(player) {
+    player.frameTimer++;
+
+    // If we exceed the interval, advance a frame
+    if (player.frameTimer >= player.frameInterval) {
+        player.frameTimer = 0;
+
+        if (player.animationState === 'walk') {
+            // cycle frames 0..(WALK_FRAMES-1)
+            player.frameIndex = (player.frameIndex + 1) % WALK_FRAMES;
+        } else {
+            // 'idle' cycle 0..(IDLE_FRAMES-1)
+            player.frameIndex = (player.frameIndex + 1) % IDLE_FRAMES;
+        }
+    }
+}
+
+
 // Called each frame by main.js
 export function updatePlayer(delta, keys, canvas) {
-    // 1) Remember old position
     const oldX = player.x;
     const oldY = player.y;
 
-    // Move
+    let moving = false;
+
     if (keys['ArrowLeft'] || keys['a']) {
         player.x -= player.speed;
+        player.facingRight = false;
+        moving = true;
     }
     if (keys['ArrowRight'] || keys['d']) {
         player.x += player.speed;
+        player.facingRight = true;
+        moving = true;
     }
     if (keys['ArrowUp'] || keys['w']) {
         player.y -= player.speed;
+        moving = true;
     }
     if (keys['ArrowDown'] || keys['s']) {
         player.y += player.speed;
+        moving = true;
     }
 
-// Constrain player to the new 3200x3200 map
+    // If we moved at all, set animation to 'walk', else 'idle'
+    player.animationState = moving ? 'walk' : 'idle';
+
+    // Constrain player to the new 3200x3200 map
     player.x = Math.max(0, Math.min(player.x, MAP_WIDTH - player.width));
     player.y = Math.max(0, Math.min(player.y, MAP_HEIGHT - player.height));
 
@@ -108,6 +154,9 @@ export function updatePlayer(delta, keys, canvas) {
         }
     }
 
+    // update the animation frames each tick
+    updateAnimation(player);
+
     // Auto-shoot
     autoShoot();
 
@@ -118,9 +167,46 @@ export function updatePlayer(delta, keys, canvas) {
 }
 
 export function drawPlayer(ctx) {
-    ctx.fillStyle = 'red';
-    ctx.fillRect(player.x, player.y, player.width, player.height);
+    // Pick the correct sheet
+    let sheet = (player.animationState === 'walk') ? walkImage : idleImage;
+    let frames = (player.animationState === 'walk') ? WALK_FRAMES : IDLE_FRAMES;
+
+    const sourceX = player.frameIndex * SPRITE_SIZE;
+    const sourceY = 0;
+
+    // The final drawn size
+    const drawWidth = SPRITE_SIZE;
+    const drawHeight = SPRITE_SIZE;
+
+    // Compute top-left draw position
+    let drawX = player.x - 48; // example offset
+    let drawY = player.y - 96;
+
+    ctx.save();
+    if (!player.facingRight) {
+        // Flip horizontally around the player's center
+        // so we translate to the player center, scale -1, then translate back
+        ctx.translate(drawX + drawWidth / 2, drawY + drawHeight / 2);
+        ctx.scale(-1, 1);
+        ctx.translate(-(drawX + drawWidth / 2), -(drawY + drawHeight / 2));
+    }
+
+    // Now draw from the sprite
+    ctx.drawImage(
+        sheet,
+        sourceX,
+        sourceY,
+        SPRITE_SIZE,
+        SPRITE_SIZE,
+        drawX,
+        drawY,
+        drawWidth,
+        drawHeight
+    );
+
+    ctx.restore();
 }
+
 
 // Called when the player kills an enemy
 export function onKillEnemy() {

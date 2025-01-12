@@ -20,7 +20,7 @@ export function spawnWave(count, waveNumber) {
 
     // Radius: half the diagonal of the map + buffer
     // e.g. sqrt((3200/2)^2 + (3200/2)^2) ~= 2262 + some buffer
-    const radius = Math.sqrt((800 / 2) ** 2 + (600 / 2) ** 2) + 50;
+    const radius = Math.sqrt((1200 / 2) ** 2 + (1000 / 2) ** 2) + 50;
 
     for (let i = 0; i < count; i++) {
         // Random angle [0..2π)
