@@ -3,6 +3,8 @@ import { createBullet, bullets } from './bullet.js';
 import { setPaused, resetLastTime } from './main.js';
 import {playShootSound} from "./sound.js";  // import our pause utilities
 import { MAP_WIDTH, MAP_HEIGHT } from './camera.js';
+import {isColliding} from "./utils.js";
+import {obstacles} from "./obstacles.js";
 
 // References to the level-up modal
 const levelUpModal = document.getElementById('levelUpModal');
@@ -61,6 +63,10 @@ btnUpgradeMaxHP.addEventListener('click', () => {
 
 // Called each frame by main.js
 export function updatePlayer(delta, keys, canvas) {
+    // 1) Remember old position
+    const oldX = player.x;
+    const oldY = player.y;
+
     // Move
     if (keys['ArrowLeft'] || keys['a']) {
         player.x -= player.speed;
@@ -78,6 +84,16 @@ export function updatePlayer(delta, keys, canvas) {
 // Constrain player to the new 3200x3200 map
     player.x = Math.max(0, Math.min(player.x, MAP_WIDTH - player.width));
     player.y = Math.max(0, Math.min(player.y, MAP_HEIGHT - player.height));
+
+    // 4) Check if we collide with ANY obstacle
+    for (let i = 0; i < obstacles.length; i++) {
+        if (isColliding(player, obstacles[i])) {
+            // If we collide, revert to old position
+            player.x = oldX;
+            player.y = oldY;
+            break;
+        }
+    }
 
     // Auto-shoot
     autoShoot();

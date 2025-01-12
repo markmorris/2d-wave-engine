@@ -3,7 +3,8 @@
 import { isColliding } from './utils.js';
 export const enemies = [];
 import { MAP_WIDTH, MAP_HEIGHT } from './camera.js';
-import {player} from "./player.js"; // <-- import map dimensions
+import {player} from "./player.js";
+import {obstacles} from "./obstacles.js"; // <-- import map dimensions
 
 /**
  * Spawns a wave of enemies in a radial pattern around the center of the *map*,
@@ -47,6 +48,9 @@ export function spawnWave(count, waveNumber) {
 export function updateEnemies(delta, player) {
     // 1) Move enemies toward the player
     enemies.forEach(enemy => {
+        const oldX = enemy.x;
+        const oldY = enemy.y;
+
         const dx = player.x - enemy.x;
         const dy = player.y - enemy.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -54,6 +58,15 @@ export function updateEnemies(delta, player) {
         if (dist > 0) {
             enemy.x += (dx / dist) * enemy.speed;
             enemy.y += (dy / dist) * enemy.speed;
+        }
+
+        // Now check collisions with obstacles
+        for (let i = 0; i < obstacles.length; i++) {
+            if (isColliding(enemy, obstacles[i])) {
+                enemy.x = oldX;
+                enemy.y = oldY;
+                break;
+            }
         }
     });
 

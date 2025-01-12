@@ -25,6 +25,7 @@ import {
     checkBulletEnemyCollisions
 } from './collisions.js';
 import { drawFPS } from './utils.js';
+import {drawObstacles, spawnObstacles} from "./obstacles.js";
 
 // -- Grab canvas and context --
 const canvas = document.getElementById('gameCanvas');
@@ -56,6 +57,7 @@ export function startGame()
 {
     initAudio();
     setupInput();
+    spawnObstacles(30); // e.g. 30 random blocks
     spawnWave(enemiesToSpawn, waveNumber);
 
     isPaused = false;
@@ -103,6 +105,8 @@ function draw() {
 
     // Apply negative camera offset, so camera.x/camera.y is the top-left
     ctx.translate(-camera.x, -camera.y);
+
+    drawObstacles(ctx);
 
     // Draw player
     drawPlayer(ctx);
