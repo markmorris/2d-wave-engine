@@ -1,4 +1,5 @@
 // bullet.js handles bullet creation and updates
+import { MAP_WIDTH, MAP_HEIGHT } from './camera.js';
 
 export const bullets = [];
 
@@ -21,13 +22,15 @@ export function updateBullets(canvas) {
         b.x += b.vx;
         b.y += b.vy;
 
-        // If bullet goes off screen, remove it
+
+        // In your updateBullets function:
         if (
             b.x + b.width < 0 ||
-            b.x > canvas.width ||
+            b.x > MAP_WIDTH ||
             b.y + b.height < 0 ||
-            b.y > canvas.height
+            b.y > MAP_HEIGHT
         ) {
+            // remove bullet only if it's completely out of the world
             bullets.splice(i, 1);
         }
     }

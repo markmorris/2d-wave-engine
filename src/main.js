@@ -3,6 +3,7 @@
  ******************************************************/
 import { keys, setupInput } from './input.js';
 import { initAudio } from './sound.js';
+import { camera, updateCamera } from './camera.js';
 import {
     player,
     updatePlayer,
@@ -55,7 +56,7 @@ export function startGame()
 {
     initAudio();
     setupInput();
-    spawnWave(enemiesToSpawn, waveNumber, canvas.width, canvas.height);
+    spawnWave(enemiesToSpawn, waveNumber);
 
     isPaused = false;
     resetLastTime();
@@ -66,6 +67,9 @@ export function startGame()
 function update(delta) {
     // Update player (movement, auto-shoot, etc.)
     updatePlayer(delta, keys, canvas);
+
+    // Now update the camera to center on the player
+    updateCamera(player);
 
     // Move and update enemies
     updateEnemies(delta, player);
@@ -86,13 +90,19 @@ function update(delta) {
     if (enemies.length === 0) {
         waveNumber++;
         enemiesToSpawn++;
-        spawnWave(enemiesToSpawn, waveNumber, canvas.width, canvas.height);
+        spawnWave(enemiesToSpawn, waveNumber);
     }
 }
 
 // -- Our main draw logic --
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Save current transform state
+    ctx.save();
+
+    // Apply negative camera offset, so camera.x/camera.y is the top-left
+    ctx.translate(-camera.x, -camera.y);
 
     // Draw player
     drawPlayer(ctx);
@@ -102,6 +112,9 @@ function draw() {
 
     // Draw bullets
     drawBullets(ctx);
+
+    // Restore transform so UI/HUD stays fixed
+    ctx.restore();
 
     // HUD
     ctx.fillStyle = 'black';

@@ -2,25 +2,28 @@
 
 import { isColliding } from './utils.js';
 export const enemies = [];
+import { MAP_WIDTH, MAP_HEIGHT } from './camera.js';
+import {player} from "./player.js"; // <-- import map dimensions
 
 /**
- * Spawns a wave of enemies in a radial pattern all around the canvas.
- * Instead of the top edge, we spawn them outside the canvas at random angles.
+ * Spawns a wave of enemies in a radial pattern around the center of the *map*,
+ * not just the 800x600 canvas.
  */
-export function spawnWave(count, waveNumber, canvasWidth, canvasHeight) {
-    // Center of the canvas
-    const cx = canvasWidth / 2;
-    const cy = canvasHeight / 2;
+export function spawnWave(count, waveNumber) {
+    // Center of the map
+    // const cx = MAP_WIDTH / 2;
+    // const cy = MAP_HEIGHT / 2;
 
-    // Radius: pick something that's definitely off-screen.
-    // For example, half the diagonal + some buffer:
-    // diagonal/2 = sqrt((width/2)^2 + (height/2)^2), but we can just do:
-    const radius = Math.max(canvasWidth, canvasHeight) / 2 + 50;
+    const cx = player.x;
+    const cy = player.y;
+
+    // Radius: half the diagonal of the map + buffer
+    // e.g. sqrt((3200/2)^2 + (3200/2)^2) ~= 2262 + some buffer
+    const radius = Math.sqrt((800 / 2) ** 2 + (600 / 2) ** 2) + 50;
 
     for (let i = 0; i < count; i++) {
-        // Random angle 0..2π
+        // Random angle [0..2π)
         const angle = Math.random() * Math.PI * 2;
-
         // Convert polar to Cartesian
         const spawnX = cx + radius * Math.cos(angle);
         const spawnY = cy + radius * Math.sin(angle);
@@ -54,7 +57,7 @@ export function updateEnemies(delta, player) {
         }
     });
 
-    // 2) Prevent enemies from overlapping each other
+    // 2) Prevent enemies from overlapping
     for (let i = 0; i < enemies.length - 1; i++) {
         for (let j = i + 1; j < enemies.length; j++) {
             if (isColliding(enemies[i], enemies[j])) {
@@ -63,6 +66,7 @@ export function updateEnemies(delta, player) {
         }
     }
 }
+
 
 /**
  * Simple function to calculate overlap and push enemies apart

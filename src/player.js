@@ -2,6 +2,7 @@ import { getNearestEnemy } from './enemy.js';
 import { createBullet, bullets } from './bullet.js';
 import { setPaused, resetLastTime } from './main.js';
 import {playShootSound} from "./sound.js";  // import our pause utilities
+import { MAP_WIDTH, MAP_HEIGHT } from './camera.js';
 
 // References to the level-up modal
 const levelUpModal = document.getElementById('levelUpModal');
@@ -12,8 +13,8 @@ const btnUpgradeMaxHP = document.getElementById('btnUpgradeMaxHP');
 
 // The player object
 export const player = {
-    x: 400,
-    y: 300,
+    x: MAP_WIDTH / 2,
+    y: MAP_HEIGHT / 2,
     width: 32,
     height: 32,
     speed: 5,
@@ -74,9 +75,9 @@ export function updatePlayer(delta, keys, canvas) {
         player.y += player.speed;
     }
 
-    // Constrain to canvas
-    player.x = Math.max(0, Math.min(player.x, canvas.width - player.width));
-    player.y = Math.max(0, Math.min(player.y, canvas.height - player.height));
+// Constrain player to the new 3200x3200 map
+    player.x = Math.max(0, Math.min(player.x, MAP_WIDTH - player.width));
+    player.y = Math.max(0, Math.min(player.y, MAP_HEIGHT - player.height));
 
     // Auto-shoot
     autoShoot();
