@@ -32,6 +32,7 @@ export const player = {
     maxHP: 2,
     attackCooldown: 1000,
     lastShotTime: 0,
+    kills: 0,
 
     level: 1,
     xp: 0,
@@ -278,6 +279,7 @@ export function drawPlayer(ctx) {
 export function onKillEnemy() {
     const xpGain = 25;
     gainXP(xpGain);
+    player.kills++;
 }
 
 // Gain XP and check for level up

@@ -44,9 +44,6 @@ let enemiesToSpawn = 12;
 const timeBetweenWaves = 10000; // e.g. 30 seconds
 let lastWaveTime = 0;
 
-// -- Player stats (kill count, etc.) --
-let kills = 0;
-
 // Wait until the image is loaded before creating the pattern
 floorTile.onload = () => {
     // We'll need a canvas or a context to call createPattern
@@ -103,7 +100,7 @@ function update(delta) {
     });
 
     // Check collisions: bullets vs. enemies
-    kills += checkBulletEnemyCollisions(bullets, enemies, player);
+    checkBulletEnemyCollisions(bullets, enemies, player);
 
     const now = performance.now();
     if (enemies.length === 0 || now - lastWaveTime >= timeBetweenWaves) {
@@ -149,7 +146,7 @@ function draw() {
     ctx.font = '16px monospace';
     ctx.fillText(`HP: ${player.hp}/${player.maxHP}`, 10, 40);
     ctx.fillText(`Wave: ${waveNumber}`, 10, 60);
-    ctx.fillText(`Kills: ${kills}`, 10, 80);
+    ctx.fillText(`Kills: ${player.kills}`, 10, 80);
     ctx.fillText(`Lvl: ${player.level} (XP: ${player.xp}/${player.xpToNextLevel})`, 10, 100);
     ctx.fillText(`SkillPts: ${player.skillPoints}`, 10, 120);
     ctx.fillText(`Attack CD: ${player.attackCooldown}ms`, 10, 140);

@@ -8,8 +8,8 @@ const bulletImage = new Image();
 bulletImage.src = 'assets/projectile.png';  // path to your 48x192 bullet sprite
 
 // Constants for the bullet frames
-const BULLET_FRAME_WIDTH = 48;
-const BULLET_FRAME_HEIGHT = 64;
+const BULLET_FRAME_WIDTH = 7;
+const BULLET_FRAME_HEIGHT = 19;
 const BULLET_TOTAL_FRAMES = 3;
 
 // Factory function to create a bullet
