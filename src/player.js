@@ -12,6 +12,8 @@ const skillPointsDisplay = document.getElementById('skillPointsDisplay');
 const btnUpgradeAttack = document.getElementById('btnUpgradeAttack');
 const btnUpgradeMove = document.getElementById('btnUpgradeMove');
 const btnUpgradeMaxHP = document.getElementById('btnUpgradeMaxHP');
+const btnUpgradeRange = document.getElementById('btnUpgradeRange');
+
 
 // The player object
 export const player = {
@@ -29,6 +31,8 @@ export const player = {
     xp: 0,
     xpToNextLevel: 100,
     skillPoints: 0,
+
+    attackRange: 250,
 };
 
 const ATTACK_SPEED_UP = 50;
@@ -56,6 +60,15 @@ btnUpgradeMaxHP.addEventListener('click', () => {
     if (player.skillPoints > 0) {
         player.maxHP += MAX_HP_UP;
         player.hp = player.maxHP;
+        player.skillPoints--;
+        updateLevelUpUI();
+    }
+});
+
+btnUpgradeRange.addEventListener('click', () => {
+    if (player.skillPoints > 0) {
+        // Increase attackRange by some amount, e.g. +50
+        player.attackRange += 50;
         player.skillPoints--;
         updateLevelUpUI();
     }
@@ -150,24 +163,31 @@ function updateLevelUpUI() {
     }
 }
 
-// Auto-shoot
 function autoShoot() {
     const now = performance.now();
     if (now - player.lastShotTime < player.attackCooldown) return;
 
+    // Find the nearest enemy
     const nearest = getNearestEnemy(player);
     if (!nearest) return;
 
-    player.lastShotTime = now;
-
+    // Calculate distance to nearest enemy
     const dx = nearest.x - player.x;
     const dy = nearest.y - player.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist === 0) return;
 
-    const speed = 8;
-    const vx = (dx / dist) * speed;
-    const vy = (dy / dist) * speed;
+    // If the enemy is farther than our attack range, do NOT shoot
+    if (dist > player.attackRange) {
+        return; // Out of range, skip
+    }
+
+    // If in range, proceed to shoot
+    player.lastShotTime = now;
+
+    // same bullet creation logic as before
+    const bulletSpeed = 8;
+    const vx = (dx / dist) * bulletSpeed;
+    const vy = (dy / dist) * bulletSpeed;
 
     bullets.push(createBullet({
         x: player.x + player.width / 2 - 4,
@@ -179,3 +199,4 @@ function autoShoot() {
     // Play the shoot SFX
     playShootSound();
 }
+

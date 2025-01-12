@@ -129,6 +129,7 @@ function draw() {
     ctx.fillText(`Lvl: ${player.level} (XP: ${player.xp}/${player.xpToNextLevel})`, 10, 100);
     ctx.fillText(`SkillPts: ${player.skillPoints}`, 10, 120);
     ctx.fillText(`Attack CD: ${player.attackCooldown}ms`, 10, 140);
+    ctx.fillText(`Attack Range: ${player.attackRange}`, 10, 160);
 
     // Display current FPS
     drawFPS(ctx, fps, 10, 20);
