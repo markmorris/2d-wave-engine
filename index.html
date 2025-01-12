@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Basic Canvas Game with Waves & Auto-Shoot</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            background: #eee;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh;
+        }
+        #gameCanvas {
+            background: #ccc;
+            border: 2px solid #333;
+            image-rendering: pixelated; /* optional for pixel-art style */
+        }
+
+        /* Simple modal styling */
+        #levelUpModal {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border: 2px solid #333;
+            display: none; /* hidden by default */
+            z-index: 9999; /* on top of everything */
+        }
+        #levelUpModal h2 {
+            margin: 0 0 10px 0;
+        }
+        #levelUpModal button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div>
+    <button style="position: absolute; top: 50%; left: 50%; z-index: 9999; transform: translate(-50%, -50%);" id="startBtn">Start Game</button>
+</div>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<!-- Level-Up Modal -->
+<div id="levelUpModal">
+    <h2>Level Up!</h2>
+    <p>You have <span id="skillPointsDisplay">0</span> points to spend.</p>
+    <button id="btnUpgradeAttack">Increase Attack Speed</button>
+    <button id="btnUpgradeMove">Increase Movement Speed</button>
+    <button id="btnUpgradeMaxHP">Increase Max HP</button>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+
+<script type="module">
+    import { startGame } from './src/main.js';
+
+    const startBtn = document.getElementById('startBtn');
+    startBtn.addEventListener('click', () => {
+        startGame()
+        startBtn.style.display = 'none';
+    });
+</script>
+</body>
+</html>
