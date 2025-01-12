@@ -14,11 +14,15 @@ enemyIdleImage.src = 'assets/enemy_idle.png';  // e.g. 5 frames -> 640x128
 const enemyWalkImage = new Image();
 enemyWalkImage.src = 'assets/enemy_walk.png';  // e.g. 6 frames -> 768x128
 
+// NEW: Death sprite (4 frames across, 128x128 each => 512x128 total)
+const enemyDieImage = new Image();
+enemyDieImage.src = 'assets/enemy_die.png';
+
 // Constants for sprite frames
 const SPRITE_SIZE = 128;   // each frame is 128 wide, 128 tall
 const IDLE_FRAMES = 5;     // e.g., 5 frames
 const WALK_FRAMES = 6;     // e.g., 6 frames
-
+const DIE_FRAMES  = 4;     // 4 frames for death
 /**
  * Spawns a wave of enemies in a radial pattern around the center of the *map*,
  * not just the 800x600 canvas.
@@ -58,7 +62,11 @@ export function spawnWave(count, waveNumber) {
             frameIndex: 0,
             frameTimer: 0,
             frameInterval: 10,       // how fast to cycle frames
-            facingRight: true        // we’ll flip if false
+            facingRight: true,        // we’ll flip if false
+
+            // NEW: If the enemy is in 'die' state, we won't remove it
+            // until the animation finishes. Also skip movement, etc.
+            isDying: false  // convenience flag if we want it
         });
     }
 }
@@ -71,11 +79,33 @@ export function spawnWave(count, waveNumber) {
  *   4) Collision checks (obstacles, other enemies).
  */
 export function updateEnemies(delta, player) {
-    enemies.forEach(enemy => {
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemy = enemies[i];
+
+        // If the enemy is dying, skip normal movement
+        if (enemy.animationState === 'die') {
+            // Optionally reduce knockback, speed, etc.
+            enemy.vx = 0;
+            enemy.vy = 0;
+            enemy.speed = 0;
+
+            // Update the death animation frames
+            updateEnemyAnimation(enemy);
+
+            // Once we reach the last frame in the death animation
+            // we remove the enemy from the array.
+            if (enemy.frameIndex === DIE_FRAMES - 1 && enemy.frameTimer === 0) {
+                // meaning we just finished the last frame
+                enemies.splice(i, 1);
+            }
+            continue; // skip the rest for this enemy
+        }
+
+        // else normal AI for living enemies
         const oldX = enemy.x;
         const oldY = enemy.y;
 
-        // -- Normal AI movement (move toward player) --
+        // Move toward player
         const dx = player.x - enemy.x;
         const dy = player.y - enemy.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -84,53 +114,66 @@ export function updateEnemies(delta, player) {
             enemy.y += (dy / dist) * enemy.speed;
         }
 
-        enemy.facingRight = player.x >= enemy.x;
+        enemy.facingRight = (player.x >= enemy.x);
+        enemy.animationState = 'walk';  // or idle if you want logic
 
-        // Hardcode to always 'walk' if you want them always moving
-        enemy.animationState = 'walk';
-
-        // -- Add knockback velocity (vx, vy) --
+        // Apply knockback velocity
         enemy.x += enemy.vx;
         enemy.y += enemy.vy;
-
-        // -- Apply friction so knockback slows over time --
-        enemy.vx *= 0.8; // tweak friction as you like (0.9 = less friction)
+        // friction
+        enemy.vx *= 0.8;
         enemy.vy *= 0.8;
 
-        // -- Obstacle collisions (if you have them) --
+        // obstacle collisions
         if (obstacles) {
             for (const obs of obstacles) {
                 if (isColliding(enemy, obs)) {
-                    // Revert
                     enemy.x = oldX;
                     enemy.y = oldY;
                     break;
                 }
             }
         }
-    });
 
-    // -- Prevent enemies overlapping each other (optional) --
-    for (let i = 0; i < enemies.length - 1; i++) {
-        for (let j = i + 1; j < enemies.length; j++) {
-            if (isColliding(enemies[i], enemies[j])) {
-                separate(enemies[i], enemies[j]);
+        // Prevent enemies overlapping each other
+        for (let i = 0; i < enemies.length - 1; i++) {
+            for (let j = i + 1; j < enemies.length; j++) {
+                if (isColliding(enemies[i], enemies[j])) {
+                    separate(enemies[i], enemies[j]);
+                }
             }
         }
     }
 }
 
+
+
+
 function updateEnemyAnimation(enemy) {
     enemy.frameTimer++;
     if (enemy.frameTimer >= enemy.frameInterval) {
         enemy.frameTimer = 0;
-        if (enemy.animationState === 'walk') {
-            enemy.frameIndex = (enemy.frameIndex + 1) % WALK_FRAMES;
-        } else {
-            enemy.frameIndex = (enemy.frameIndex + 1) % IDLE_FRAMES;
+
+        switch (enemy.animationState) {
+            case 'walk':
+                enemy.frameIndex = (enemy.frameIndex + 1) % WALK_FRAMES;
+                break;
+
+            case 'idle':
+                enemy.frameIndex = (enemy.frameIndex + 1) % IDLE_FRAMES;
+                break;
+
+            case 'die':
+                // Move forward one frame, but do NOT loop
+                // e.g. clamp to last frame
+                if (enemy.frameIndex < DIE_FRAMES - 1) {
+                    enemy.frameIndex++;
+                }
+                break;
         }
     }
 }
+
 
 
 /**
@@ -182,29 +225,36 @@ export function drawEnemies(ctx) {
     enemies.forEach(enemy => {
         ctx.save();
 
-        // Pick which sprite sheet
-        const sheet = (enemy.animationState === 'walk') ? enemyWalkImage : enemyIdleImage;
-        const frames = (enemy.animationState === 'walk') ? WALK_FRAMES : IDLE_FRAMES;
+        let sheet;
+        let frames = 1; // default fallback
+        switch (enemy.animationState) {
+            case 'walk':
+                sheet = enemyWalkImage;
+                frames = WALK_FRAMES;
+                break;
+            case 'die':
+                sheet = enemyDieImage;
+                frames = DIE_FRAMES;
+                break;
+            default:
+                sheet = enemyIdleImage;
+                frames = IDLE_FRAMES;
+                break;
+        }
 
-        // Which frame?
         const sourceX = enemy.frameIndex * SPRITE_SIZE;
         const sourceY = 0;
 
-        // We want to draw the 128x128 sprite, possibly flipping
-        // We can offset the draw so the enemy.x,y is near the center or feet
-        // For example:
-        const drawX = enemy.x - 48; // shift left so collision box is smaller
-        const drawY = enemy.y - 96;
         const drawWidth = SPRITE_SIZE;
         const drawHeight = SPRITE_SIZE;
+        const drawX = enemy.x - 48; // shift for visuals
+        const drawY = enemy.y - 96;
 
-        // Translate to sprite center for flipping
         ctx.translate(drawX + drawWidth/2, drawY + drawHeight/2);
         if (!enemy.facingRight) {
-            // Flip horizontally
             ctx.scale(-1, 1);
         }
-        // Now the top-left corner is at (-drawWidth/2, -drawHeight/2)
+
         ctx.drawImage(
             sheet,
             sourceX,
@@ -220,6 +270,7 @@ export function drawEnemies(ctx) {
         ctx.restore();
     });
 }
+
 
 
 /**

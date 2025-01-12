@@ -13,6 +13,7 @@ const btnUpgradeAttack = document.getElementById('btnUpgradeAttack');
 const btnUpgradeMove = document.getElementById('btnUpgradeMove');
 const btnUpgradeMaxHP = document.getElementById('btnUpgradeMaxHP');
 const btnUpgradeRange = document.getElementById('btnUpgradeRange');
+const btnUpgradeGarlic = document.getElementById('btnUpgradeGarlic');
 
 // Create Image objects
 const idleImage = new Image();
@@ -57,9 +58,9 @@ export const player = {
     garlicTickInterval: 0.5, // do damage every 0.5 seconds
 };
 
-const ATTACK_SPEED_UP = 50;
-const MOVE_SPEED_UP = 0.5;
-const MAX_HP_UP = 1;
+const ATTACK_SPEED_UP = 10;
+const MOVE_SPEED_UP = 0.2;
+const MAX_HP_UP = 2;
 
 // For reference, each idle frame is 128x128, total frames = 5
 const IDLE_FRAMES = 5;
@@ -96,6 +97,16 @@ btnUpgradeRange.addEventListener('click', () => {
     if (player.skillPoints > 0) {
         // Increase attackRange by some amount, e.g. +50
         player.attackRange += 50;
+        player.skillPoints--;
+        updateLevelUpUI();
+    }
+});
+
+btnUpgradeGarlic.addEventListener('click', () => {
+    if (player.skillPoints > 0) {
+        player.garlicRadius += 5;
+        player.garlicDPS += 1;
+        player.hasGarlic = true;
         player.skillPoints--;
         updateLevelUpUI();
     }
@@ -187,6 +198,9 @@ function updateGarlicAura(delta) {
         const damageThisTick = player.garlicDPS * player.garlicTickInterval;
 
         enemies.forEach((enemy, i) => {
+            // if the enemy is dying, skip it
+            if (enemy.isDying) return;
+
             const dx = enemy.x - player.x;
             const dy = enemy.y - player.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
@@ -198,7 +212,12 @@ function updateGarlicAura(delta) {
 
                 // 2) Check if the enemy dies
                 if (enemy.hp <= 0) {
-                    enemies.splice(i, 1);
+                    // Trigger the death animation
+                    enemy.animationState = 'die';
+                    enemy.frameIndex = 0;
+                    enemy.frameTimer = 0;
+                    enemy.isDying = true;
+                    enemy.speed = 0;
                     onKillEnemy?.();
                 } else {
                     // 3) Apply knockback, pushing them outward from the player

@@ -1,17 +1,19 @@
 import { isColliding } from './utils.js';
 import { onKillEnemy } from './player.js';
-import {playDamageSound} from "./sound.js";
+import { playDamageSound } from './sound.js';
 
 /**
  * Check if any enemy collides with the player.
  * If so, reduce HP, remove that enemy. If HP <= 0, call gameOverCallback().
+ * (This logic can stay the same, or you could also set the enemy to 'die' instead
+ * of removing instantly, if you want a death animation for collisions too.)
  */
 export function checkEnemyPlayerCollisions(player, enemies, gameOverCallback) {
     for (let i = enemies.length - 1; i >= 0; i--) {
         if (isColliding(player, enemies[i])) {
             // Player takes damage
             player.hp--;
-            // Remove enemy
+            // Remove enemy immediately (or set them to 'die' if you want an animation)
             enemies.splice(i, 1);
 
             // Play damage SFX
@@ -28,6 +30,8 @@ export function checkEnemyPlayerCollisions(player, enemies, gameOverCallback) {
 
 /**
  * Check if bullet collides with enemy, handle kills/XP.
+ * Updated so that if an enemy's HP <= 0, we set them to a 'die' state
+ * rather than removing them from the array.
  */
 export function checkBulletEnemyCollisions(bullets, enemies, player) {
     for (let b = bullets.length - 1; b >= 0; b--) {
@@ -42,7 +46,6 @@ export function checkBulletEnemyCollisions(bullets, enemies, player) {
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
                 if (dist > 0) {
-                    // Adjust knockback strength as desired
                     const knockbackStrength = 15;
                     enemies[e].vx = (dx / dist) * knockbackStrength;
                     enemies[e].vy = (dy / dist) * knockbackStrength;
@@ -51,11 +54,17 @@ export function checkBulletEnemyCollisions(bullets, enemies, player) {
                 // Remove the bullet
                 bullets.splice(b, 1);
 
-                // If enemy is killed, remove enemy and grant XP
-                if (enemies[e].hp <= 0) {
-                    enemies.splice(e, 1);
-                    // e.g. XP or onKillEnemy() if you want:
-                    onKillEnemy?.(); // if you have that function
+                // If enemy's HP <= 0, set them to 'die' instead of removing immediately
+                if (enemies[e].hp <= 0 && !enemies[e].isDying) {
+                    // Trigger the death animation
+                    enemies[e].animationState = 'die';
+                    enemies[e].frameIndex = 0;
+                    enemies[e].frameTimer = 0;
+                    enemies[e].isDying = true;
+                    enemies[e].speed = 0;
+
+                    // If you want to grant XP immediately, you can still call onKillEnemy here
+                    onKillEnemy?.();
                 }
 
                 // Break out of enemy loop (this bullet is done)
