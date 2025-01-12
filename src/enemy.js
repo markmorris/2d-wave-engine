@@ -34,8 +34,8 @@ export function spawnWave(count, waveNumber) {
             y: spawnY,
             width: 32,
             height: 32,
-            speed: 0.8 + waveNumber * 0.3,
-            hp: 4,
+            speed: (0.8 + waveNumber * 0.1) + Math.random() * 0.2,
+            hp: 1 + waveNumber * 0.2,
 
             vx: 0,
             vy: 0
