@@ -30,30 +30,37 @@ export function checkEnemyPlayerCollisions(player, enemies, gameOverCallback) {
  * Check if bullet collides with enemy, handle kills/XP.
  */
 export function checkBulletEnemyCollisions(bullets, enemies, player) {
-    let killCount = 0;
-
     for (let b = bullets.length - 1; b >= 0; b--) {
         for (let e = enemies.length - 1; e >= 0; e--) {
             if (isColliding(bullets[b], enemies[e])) {
+                // Bullet hits enemy
                 enemies[e].hp--;
-                // Remove bullet
-                bullets.splice(b, 1);
 
-                if (enemies[e].hp <= 0) {
-                    enemies.splice(e, 1);
-                    killCount++;
+                // Compute knockback vector (from bullet center to enemy center)
+                const dx = (enemies[e].x + enemies[e].width / 2) - (bullets[b].x + bullets[b].width / 2);
+                const dy = (enemies[e].y + enemies[e].height / 2) - (bullets[b].y + bullets[b].height / 2);
+                const dist = Math.sqrt(dx * dx + dy * dy);
 
-                    // Instead of attackCooldown => now we do:
-                    onKillEnemy(); // grant XP, handle level ups
-
-                    // Optionally: still keep a small auto-buff if you want
-                    // player.attackCooldown = Math.max(300, player.attackCooldown - 50);
+                if (dist > 0) {
+                    // Adjust knockback strength as desired
+                    const knockbackStrength = 15;
+                    enemies[e].vx = (dx / dist) * knockbackStrength;
+                    enemies[e].vy = (dy / dist) * knockbackStrength;
                 }
 
-                break; // bullet is gone, break out of enemy loop
+                // Remove the bullet
+                bullets.splice(b, 1);
+
+                // If enemy is killed, remove enemy and grant XP
+                if (enemies[e].hp <= 0) {
+                    enemies.splice(e, 1);
+                    // e.g. XP or onKillEnemy() if you want:
+                    onKillEnemy?.(); // if you have that function
+                }
+
+                // Break out of enemy loop (this bullet is done)
+                break;
             }
         }
     }
-
-    return killCount;
 }

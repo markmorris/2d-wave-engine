@@ -36,7 +36,7 @@ let fps = 0;
 
 // -- Wave info --
 let waveNumber = 1;
-let enemiesToSpawn = 3;
+let enemiesToSpawn = 12;
 const timeBetweenWaves = 30000; // e.g. 30 seconds
 let lastWaveTime = 0;
 

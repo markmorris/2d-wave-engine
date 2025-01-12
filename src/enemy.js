@@ -34,43 +34,58 @@ export function spawnWave(count, waveNumber) {
             y: spawnY,
             width: 32,
             height: 32,
-            speed: 1.5 + waveNumber * 0.3,
-            hp: 1,
+            speed: 0.8 + waveNumber * 0.3,
+            hp: 4,
+
+            vx: 0,
+            vy: 0
         });
     }
 }
 
 /**
  * Update all enemies:
- *  1) Move them toward the player.
- *  2) Prevent overlapping by separating any colliding enemies.
+ *   1) Move them toward the player.
+ *   2) Apply knockback (vx, vy) each frame.
+ *   3) Apply friction to vx, vy.
+ *   4) Collision checks (obstacles, other enemies).
  */
 export function updateEnemies(delta, player) {
-    // 1) Move enemies toward the player
     enemies.forEach(enemy => {
         const oldX = enemy.x;
         const oldY = enemy.y;
 
+        // -- Normal AI movement (move toward player) --
         const dx = player.x - enemy.x;
         const dy = player.y - enemy.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-
         if (dist > 0) {
             enemy.x += (dx / dist) * enemy.speed;
             enemy.y += (dy / dist) * enemy.speed;
         }
 
-        // Now check collisions with obstacles
-        for (let i = 0; i < obstacles.length; i++) {
-            if (isColliding(enemy, obstacles[i])) {
-                enemy.x = oldX;
-                enemy.y = oldY;
-                break;
+        // -- Add knockback velocity (vx, vy) --
+        enemy.x += enemy.vx;
+        enemy.y += enemy.vy;
+
+        // -- Apply friction so knockback slows over time --
+        enemy.vx *= 0.8; // tweak friction as you like (0.9 = less friction)
+        enemy.vy *= 0.8;
+
+        // -- Obstacle collisions (if you have them) --
+        if (obstacles) {
+            for (const obs of obstacles) {
+                if (isColliding(enemy, obs)) {
+                    // Revert
+                    enemy.x = oldX;
+                    enemy.y = oldY;
+                    break;
+                }
             }
         }
     });
 
-    // 2) Prevent enemies from overlapping
+    // -- Prevent enemies overlapping each other (optional) --
     for (let i = 0; i < enemies.length - 1; i++) {
         for (let j = i + 1; j < enemies.length; j++) {
             if (isColliding(enemies[i], enemies[j])) {
