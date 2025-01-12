@@ -42,7 +42,7 @@ const MAX_HP_UP = 1;
 // Button event listeners
 btnUpgradeAttack.addEventListener('click', () => {
     if (player.skillPoints > 0) {
-        player.attackCooldown = Math.max(200, player.attackCooldown - ATTACK_SPEED_UP);
+        player.attackCooldown = Math.max(50, player.attackCooldown - ATTACK_SPEED_UP);
         player.skillPoints--;
         updateLevelUpUI();
     }

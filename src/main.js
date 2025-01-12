@@ -37,6 +37,8 @@ let fps = 0;
 // -- Wave info --
 let waveNumber = 1;
 let enemiesToSpawn = 3;
+const timeBetweenWaves = 30000; // e.g. 30 seconds
+let lastWaveTime = 0;
 
 // -- Player stats (kill count, etc.) --
 let kills = 0;
@@ -59,6 +61,7 @@ export function startGame()
     setupInput();
     spawnObstacles(30); // e.g. 30 random blocks
     spawnWave(enemiesToSpawn, waveNumber);
+    lastWaveTime = performance.now();      // mark time
 
     isPaused = false;
     resetLastTime();
@@ -88,16 +91,20 @@ function update(delta) {
     // Check collisions: bullets vs. enemies
     kills += checkBulletEnemyCollisions(bullets, enemies, player);
 
-    // If wave is cleared, spawn the next
-    if (enemies.length === 0) {
+    const now = performance.now();
+    if (enemies.length === 0 || now - lastWaveTime >= timeBetweenWaves) {
         waveNumber++;
         enemiesToSpawn++;
         spawnWave(enemiesToSpawn, waveNumber);
+        lastWaveTime = now;
     }
 }
 
 // -- Our main draw logic --
 function draw() {
+    const now = performance.now();
+    const timeLeft = Math.max(0, timeBetweenWaves - (now - lastWaveTime));
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Save current transform state
@@ -130,6 +137,7 @@ function draw() {
     ctx.fillText(`SkillPts: ${player.skillPoints}`, 10, 120);
     ctx.fillText(`Attack CD: ${player.attackCooldown}ms`, 10, 140);
     ctx.fillText(`Attack Range: ${player.attackRange}`, 10, 160);
+    ctx.fillText(`Next Wave in: ${Math.ceil(timeLeft / 1000)}s`, 10, 180);
 
     // Display current FPS
     drawFPS(ctx, fps, 10, 20);
