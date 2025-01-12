@@ -1,20 +1,33 @@
 // enemy.js
 
-// Suppose you store enemies in this array (exported to main.js)
+import { isColliding } from './utils.js';
 export const enemies = [];
 
-// Example isColliding import (adjust the import path as needed)
-import { isColliding } from './utils.js';
-
 /**
- * Spawns a wave of enemies along the top.
- * (Unchanged — only shown for context)
+ * Spawns a wave of enemies in a radial pattern all around the canvas.
+ * Instead of the top edge, we spawn them outside the canvas at random angles.
  */
-export function spawnWave(count, waveNumber, canvasWidth) {
+export function spawnWave(count, waveNumber, canvasWidth, canvasHeight) {
+    // Center of the canvas
+    const cx = canvasWidth / 2;
+    const cy = canvasHeight / 2;
+
+    // Radius: pick something that's definitely off-screen.
+    // For example, half the diagonal + some buffer:
+    // diagonal/2 = sqrt((width/2)^2 + (height/2)^2), but we can just do:
+    const radius = Math.max(canvasWidth, canvasHeight) / 2 + 50;
+
     for (let i = 0; i < count; i++) {
+        // Random angle 0..2π
+        const angle = Math.random() * Math.PI * 2;
+
+        // Convert polar to Cartesian
+        const spawnX = cx + radius * Math.cos(angle);
+        const spawnY = cy + radius * Math.sin(angle);
+
         enemies.push({
-            x: Math.random() * (canvasWidth - 32),
-            y: -32,
+            x: spawnX,
+            y: spawnY,
             width: 32,
             height: 32,
             speed: 1.5 + waveNumber * 0.3,
@@ -57,7 +70,6 @@ export function updateEnemies(delta, player) {
 function separate(e1, e2) {
     const { overlapX, overlapY } = getOverlap(e1, e2);
 
-    // If they're truly overlapping in both axes
     if (overlapX > 0 && overlapY > 0) {
         // Decide which axis to push them along (the smaller overlap)
         if (overlapX < overlapY) {
@@ -82,9 +94,6 @@ function separate(e1, e2) {
     }
 }
 
-/**
- * Calculate how much e1 and e2 overlap on x and y axes.
- */
 function getOverlap(e1, e2) {
     const overlapX =
         Math.min(e1.x + e1.width, e2.x + e2.width) -
@@ -97,7 +106,9 @@ function getOverlap(e1, e2) {
     return { overlapX, overlapY };
 }
 
-// Draw all enemies
+/**
+ * Draw all enemies
+ */
 export function drawEnemies(ctx) {
     ctx.fillStyle = 'blue';
     enemies.forEach(enemy => {
@@ -105,7 +116,9 @@ export function drawEnemies(ctx) {
     });
 }
 
-// Return the nearest enemy to the player
+/**
+ * Return the nearest enemy to the player
+ */
 export function getNearestEnemy(player) {
     if (enemies.length === 0) return null;
 

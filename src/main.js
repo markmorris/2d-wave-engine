@@ -55,7 +55,7 @@ export function startGame()
 {
     initAudio();
     setupInput();
-    spawnWave(enemiesToSpawn, waveNumber, canvas.width);
+    spawnWave(enemiesToSpawn, waveNumber, canvas.width, canvas.height);
 
     isPaused = false;
     resetLastTime();
@@ -86,7 +86,7 @@ function update(delta) {
     if (enemies.length === 0) {
         waveNumber++;
         enemiesToSpawn++;
-        spawnWave(enemiesToSpawn, waveNumber, canvas.width);
+        spawnWave(enemiesToSpawn, waveNumber, canvas.width, canvas.height);
     }
 }
 
