@@ -1,4 +1,4 @@
-import { getNearestEnemy } from './enemy.js';
+import {enemies, getNearestEnemy} from './enemy.js';
 import { createBullet, bullets } from './bullet.js';
 import { setPaused, resetLastTime } from './main.js';
 import {playShootSound} from "./sound.js";  // import our pause utilities
@@ -47,6 +47,13 @@ export const player = {
     frameInterval: 10,       // how often to advance frame (bigger => slower anim)
 
     facingRight: true,       // if false, we flip horizontally
+
+    // --- Garlic ability ---
+    hasGarlic: true,    // or set to false if you want it unlockable later
+    garlicRadius: 100,  // how far the garlic aura reaches
+    garlicDPS: 1,       // how much damage per second to enemies in range
+    garlicTickTimer: 0, // track time to do tick damage
+    garlicTickInterval: 0.5, // do damage every 0.5 seconds
 };
 
 const ATTACK_SPEED_UP = 50;
@@ -160,11 +167,53 @@ export function updatePlayer(delta, keys, canvas) {
     // Auto-shoot
     autoShoot();
 
+    // After normal updates, do garlic logic
+    if (player.hasGarlic) {
+        updateGarlicAura(delta);
+    }
+
     // If skill points > 0, show the level-up modal (and pause the game if not already paused)
     if (player.skillPoints > 0) {
         showLevelUpUI();
     }
 }
+
+function updateGarlicAura(delta) {
+    player.garlicTickTimer += delta / 1000; // accumulate time in seconds
+
+    if (player.garlicTickTimer >= player.garlicTickInterval) {
+        player.garlicTickTimer = 0;
+        const damageThisTick = player.garlicDPS * player.garlicTickInterval;
+
+        enemies.forEach((enemy, i) => {
+            const dx = enemy.x - player.x;
+            const dy = enemy.y - player.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            // If enemy is within garlic radius
+            if (dist <= player.garlicRadius) {
+                // 1) Apply damage
+                enemy.hp -= damageThisTick;
+
+                // 2) Check if the enemy dies
+                if (enemy.hp <= 0) {
+                    enemies.splice(i, 1);
+                    onKillEnemy?.();
+                } else {
+                    // 3) Apply knockback, pushing them outward from the player
+                    if (dist > 0) {
+                        // small push each tick, adjust to taste
+                        const knockbackStrength = 3;
+                        enemy.vx += (dx / dist) * knockbackStrength;
+                        enemy.vy += (dy / dist) * knockbackStrength;
+                    }
+                }
+            }
+        });
+    }
+}
+
+
 
 export function drawPlayer(ctx) {
     // Pick the correct sheet
@@ -205,6 +254,23 @@ export function drawPlayer(ctx) {
     );
 
     ctx.restore();
+
+    // 2) If player.hasGarlic, draw a circle
+    if (player.hasGarlic) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)'; // yellowish
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(
+            player.x + player.width / 2,
+            player.y + player.height / 2,
+            player.garlicRadius,
+            0,
+            Math.PI * 2
+        );
+        ctx.stroke();
+        ctx.restore();
+    }
 }
 
 
