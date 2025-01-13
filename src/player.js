@@ -14,6 +14,8 @@ const btnUpgradeMove = document.getElementById('btnUpgradeMove');
 const btnUpgradeMaxHP = document.getElementById('btnUpgradeMaxHP');
 const btnUpgradeRange = document.getElementById('btnUpgradeRange');
 const btnUpgradeGarlic = document.getElementById('btnUpgradeGarlic');
+const btnUpgradeGarlicAttack = document.getElementById('btnUpgradeGarlicAttack');
+const btnUpgradeItemPickupRadius = document.getElementById('btnUpgradeItemPickupRadius');
 
 // Create Image objects
 const idleImage = new Image();
@@ -86,7 +88,7 @@ btnUpgradeMove.addEventListener('click', () => {
 
 btnUpgradeMaxHP.addEventListener('click', () => {
     if (player.skillPoints > 0) {
-        player.maxHP += MAX_HP_UP;
+        player.maxHP *= 1.2;
         player.hp = player.maxHP;
         player.skillPoints--;
         updateLevelUpUI();
@@ -104,9 +106,23 @@ btnUpgradeRange.addEventListener('click', () => {
 
 btnUpgradeGarlic.addEventListener('click', () => {
     if (player.skillPoints > 0) {
-        player.garlicRadius += 5;
-        player.garlicDPS += 0.2;
-        player.hasGarlic = true;
+        player.garlicRadius *= 1.1;
+        player.skillPoints--;
+        updateLevelUpUI();
+    }
+});
+
+btnUpgradeGarlicAttack.addEventListener('click', () => {
+    if (player.skillPoints > 0) {
+        player.garlicDPS *= 1.2;
+        player.skillPoints--;
+        updateLevelUpUI();
+    }
+});
+
+btnUpgradeItemPickupRadius.addEventListener('click', () => {
+    if (player.skillPoints > 0) {
+        player.pickupRadius *= 1.1;
         player.skillPoints--;
         updateLevelUpUI();
     }
@@ -291,6 +307,36 @@ export function drawPlayer(ctx) {
         ctx.stroke();
         ctx.restore();
     }
+
+    // Draw player pickup radius
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 0, 255, 0.6)'; // yellowish
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(
+        player.x + player.width / 2,
+        player.y + player.height / 2,
+        player.pickupRadius,
+        0,
+        Math.PI * 2
+    );
+    ctx.stroke();
+    ctx.restore();
+
+    // Draw player attack range
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)'; // greenish
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(
+        player.x + player.width / 2,
+        player.y + player.height / 2,
+        player.attackRange,
+        0,
+        Math.PI * 2
+    );
+    ctx.stroke();
+    ctx.restore();
 }
 
 
