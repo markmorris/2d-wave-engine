@@ -72,7 +72,7 @@ const SPRITE_SIZE = 128; // each frame is 128 wide, 128 tall
 // Button event listeners
 btnUpgradeAttack.addEventListener('click', () => {
     if (player.skillPoints > 0) {
-        player.attackCooldown = Math.max(50, player.attackCooldown - ATTACK_SPEED_UP);
+        player.attackCooldown = Math.max(50, player.attackCooldown * 0.9);
         player.skillPoints--;
         updateLevelUpUI();
     }
@@ -80,7 +80,7 @@ btnUpgradeAttack.addEventListener('click', () => {
 
 btnUpgradeMove.addEventListener('click', () => {
     if (player.skillPoints > 0) {
-        player.speed += MOVE_SPEED_UP;
+        player.speed *= 1.1;
         player.skillPoints--;
         updateLevelUpUI();
     }
@@ -88,7 +88,7 @@ btnUpgradeMove.addEventListener('click', () => {
 
 btnUpgradeMaxHP.addEventListener('click', () => {
     if (player.skillPoints > 0) {
-        player.maxHP *= 1.2;
+        player.maxHP *= 1.1;
         player.hp = player.maxHP;
         player.skillPoints--;
         updateLevelUpUI();
@@ -98,7 +98,7 @@ btnUpgradeMaxHP.addEventListener('click', () => {
 btnUpgradeRange.addEventListener('click', () => {
     if (player.skillPoints > 0) {
         // Increase attackRange by some amount, e.g. +50
-        player.attackRange += 50;
+        player.attackRange *= 1.1;
         player.skillPoints--;
         updateLevelUpUI();
     }
