@@ -38,7 +38,7 @@ export function checkBulletEnemyCollisions(bullets, enemies, player) {
         for (let e = enemies.length - 1; e >= 0; e--) {
             if (isColliding(bullets[b], enemies[e])) {
                 // Bullet hits enemy
-                enemies[e].hp--;
+                enemies[e].hp -= bullets[b].damage;
 
                 // Compute knockback vector (from bullet center to enemy center)
                 const dx = (enemies[e].x + enemies[e].width / 2) - (bullets[b].x + bullets[b].width / 2);

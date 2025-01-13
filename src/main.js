@@ -158,9 +158,10 @@ function draw() {
     ctx.fillText(`SkillPts: ${player.skillPoints}`, 10, 120);
     ctx.fillText(`Attack Speed: ${player.attackCooldown}ms`, 10, 140);
     ctx.fillText(`Attack Range: ${player.attackRange}`, 10, 160);
-    ctx.fillText(`Garlic Aura: ${player.garlicRadius}`, 10, 180);
-    ctx.fillText(`Garlic DPS: ${player.garlicDPS}`, 10, 200);
-    ctx.fillText(`Next Wave in: ${Math.ceil(timeLeft / 1000)}s`, 10, 220);
+    ctx.fillText(`Attack Damage: ${player.attackDamage}`, 10, 180);
+    ctx.fillText(`Garlic Aura: ${player.garlicRadius}`, 10, 200);
+    ctx.fillText(`Garlic DPS: ${player.garlicDPS}`, 10, 220);
+    ctx.fillText(`Next Wave in: ${Math.ceil(timeLeft / 1000)}s`, 10, 240);
 
     // Display current FPS
     drawFPS(ctx, fps, 10, 20);

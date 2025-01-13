@@ -13,7 +13,7 @@ const BULLET_FRAME_HEIGHT = 19;
 const BULLET_TOTAL_FRAMES = 3;
 
 // Factory function to create a bullet
-export function createBullet({ x, y, vx, vy }) {
+export function createBullet({ x, y, vx, vy, damage }) {
     // Calculate angle so the sprite can rotate
     const angle = Math.atan2(vy, vx); // bullet is facing right at 0°, so we rotate from +x
 
@@ -22,6 +22,7 @@ export function createBullet({ x, y, vx, vy }) {
         y,
         vx,
         vy,
+        damage,
         angle,
         width: BULLET_FRAME_WIDTH,
         height: BULLET_FRAME_HEIGHT,

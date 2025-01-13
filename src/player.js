@@ -10,6 +10,7 @@ import {obstacles} from "./obstacles.js";
 const levelUpModal = document.getElementById('levelUpModal');
 const skillPointsDisplay = document.getElementById('skillPointsDisplay');
 const btnUpgradeAttack = document.getElementById('btnUpgradeAttack');
+const btnUpgradeAttackDamage = document.getElementById('btnUpgradeAttackDamage');
 const btnUpgradeMove = document.getElementById('btnUpgradeMove');
 const btnUpgradeMaxHP = document.getElementById('btnUpgradeMaxHP');
 const btnUpgradeRange = document.getElementById('btnUpgradeRange');
@@ -34,6 +35,7 @@ export const player = {
     hp: 2,
     maxHP: 2,
     attackCooldown: 1000,
+    attackDamage: 1,
     lastShotTime: 0,
     kills: 0,
 
@@ -73,6 +75,14 @@ const SPRITE_SIZE = 128; // each frame is 128 wide, 128 tall
 btnUpgradeAttack.addEventListener('click', () => {
     if (player.skillPoints > 0) {
         player.attackCooldown = Math.max(50, player.attackCooldown * 0.9);
+        player.skillPoints--;
+        updateLevelUpUI();
+    }
+});
+
+btnUpgradeAttackDamage.addEventListener('click', () => {
+    if (player.skillPoints > 0) {
+        player.attackDamage *= 1.1;
         player.skillPoints--;
         updateLevelUpUI();
     }
@@ -412,7 +422,8 @@ function autoShoot() {
         x: player.x + player.width / 2 - 4,
         y: player.y + player.height / 2 - 4,
         vx,
-        vy
+        vy,
+        damage: player.attackDamage
     }));
 
     // Play the shoot SFX
