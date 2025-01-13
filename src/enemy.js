@@ -5,7 +5,8 @@ export const enemies = [];
 import { MAP_WIDTH, MAP_HEIGHT } from './camera.js';
 import {player} from "./player.js";
 import {obstacles} from "./obstacles.js";
-import {playDeathSound} from "./sound.js"; // <-- import map dimensions
+import {playDeathSound} from "./sound.js";
+import {createGem, gems} from "./gems.js"; // <-- import map dimensions
 
 // Example paths to your enemy sprite sheets
 // (same format as player, each 128x128 per frame, horizontal frames)
@@ -29,8 +30,11 @@ bossDieImage.src = 'assets/boss_die.png';      // e.g. 4 frames -> 512x128?
 // Constants for sprite frames
 const SPRITE_SIZE = 128;   // each frame is 128 wide, 128 tall
 const IDLE_FRAMES = 5;     // e.g., 5 frames
-const WALK_FRAMES = 6;     // e.g., 6 frames
+const WALK_FRAMES = 5;     // e.g., 6 frames
 const DIE_FRAMES  = 4;     // 4 frames for death
+const BOSS_WALK_FRAMES = 6;     // e.g., 6 frames for boss
+const BOSS_DIE_FRAMES  = 5;     // 4 frames for boss death
+
 /**
  * Spawns a wave of enemies in a radial pattern around the center of the *map*,
  * not just the 800x600 canvas.
@@ -71,11 +75,7 @@ export function spawnWave(count, waveNumber) {
             frameTimer: 0,
             frameInterval: 10,       // how fast to cycle frames
             facingRight: true,        // we’ll flip if false
-
-            // NEW: If the enemy is in 'die' state, we won't remove it
-            // until the animation finishes. Also skip movement, etc.
             isDying: false,  // convenience flag if we want it
-
             isBoss: false   // convenience flag if we want it
         });
     }
@@ -106,8 +106,6 @@ export function spawnWave(count, waveNumber) {
             frameInterval: 10,
             facingRight: true,
             isDying: false,
-
-            // Flag to indicate it's a boss
             isBoss: true
         });
     }
@@ -141,6 +139,8 @@ export function updateEnemies(delta, player) {
                 enemies.splice(i, 1);
 
                 playDeathSound();
+
+                gems.push(createGem(enemy.x, enemy.y, 25)); // 25 = xpValue, your choice
             }
             continue; // skip the rest for this enemy
         }
@@ -168,6 +168,8 @@ export function updateEnemies(delta, player) {
         enemy.vx *= 0.8;
         enemy.vy *= 0.8;
 
+        updateEnemyAnimation(enemy);
+
         // obstacle collisions
         if (obstacles) {
             for (const obs of obstacles) {
@@ -180,17 +182,15 @@ export function updateEnemies(delta, player) {
         }
 
         // Prevent enemies overlapping each other
-        for (let i = 0; i < enemies.length - 1; i++) {
-            for (let j = i + 1; j < enemies.length; j++) {
-                if (isColliding(enemies[i], enemies[j])) {
-                    separate(enemies[i], enemies[j]);
+        for (let m = 0; m < enemies.length - 1; m++) {
+            for (let n = m + 1; n < enemies.length; n++) {
+                if (isColliding(enemies[m], enemies[n])) {
+                    separate(enemies[m], enemies[n]);
                 }
             }
         }
     }
 }
-
-
 
 
 function updateEnemyAnimation(enemy) {
@@ -199,25 +199,38 @@ function updateEnemyAnimation(enemy) {
         enemy.frameTimer = 0;
 
         switch (enemy.animationState) {
+
             case 'walk':
-                enemy.frameIndex = (enemy.frameIndex + 1) % WALK_FRAMES;
+                if (enemy.isBoss) {
+                    // Use boss walk frames
+                    enemy.frameIndex = (enemy.frameIndex + 1) % BOSS_WALK_FRAMES;
+                } else {
+                    // Normal enemy
+                    enemy.frameIndex = (enemy.frameIndex + 1) % WALK_FRAMES;
+                }
                 break;
 
             case 'idle':
+                // If you want the boss to have different idle frames, do the same approach here
                 enemy.frameIndex = (enemy.frameIndex + 1) % IDLE_FRAMES;
                 break;
 
             case 'die':
-                // Move forward one frame, but do NOT loop
-                // e.g. clamp to last frame
-                if (enemy.frameIndex < DIE_FRAMES - 1) {
-                    enemy.frameIndex++;
+                if (enemy.isBoss) {
+                    // Boss has more die frames
+                    if (enemy.frameIndex < BOSS_DIE_FRAMES - 1) {
+                        enemy.frameIndex++;
+                    }
+                } else {
+                    // Normal enemy
+                    if (enemy.frameIndex < DIE_FRAMES - 1) {
+                        enemy.frameIndex++;
+                    }
                 }
                 break;
         }
     }
 }
-
 
 
 /**
@@ -263,66 +276,65 @@ function getOverlap(e1, e2) {
 }
 
 /**
- * Draw all enemies
+ * Draw all enemies, picking boss or normal sprites.
  */
 export function drawEnemies(ctx) {
     enemies.forEach(enemy => {
         ctx.save();
 
-
-        // Decide which sheet to use
-        let sheet;
-        let frames = 1;
-
+        let sheet; // which image
+        // We don't need separate frames for boss vs. normal, since the count is the same
+        // We'll still pick different sheets for visuals:
         if (enemy.isBoss) {
-            // Boss logic
+            // boss logic
             if (enemy.animationState === 'die') {
                 sheet = bossDieImage;
-                frames = DIE_FRAMES;
             } else {
-                // e.g. 'walk' or 'idle'
+                // 'walk' or 'idle'
                 sheet = bossWalkImage;
-                frames = WALK_FRAMES;
             }
         } else {
-            // Normal enemy
+            // normal enemy
             switch (enemy.animationState) {
                 case 'walk':
                     sheet = enemyWalkImage;
-                    frames = WALK_FRAMES;
                     break;
                 case 'die':
                     sheet = enemyDieImage;
-                    frames = DIE_FRAMES;
                     break;
                 default:
                     sheet = enemyIdleImage;
-                    frames = IDLE_FRAMES;
                     break;
             }
         }
 
+        // each frame is 128 wide, 128 high
         const sourceX = enemy.frameIndex * SPRITE_SIZE;
         const sourceY = 0;
 
-        const drawWidth = SPRITE_SIZE;
+        // let's draw at 128x128
+        const drawWidth  = SPRITE_SIZE;
         const drawHeight = SPRITE_SIZE;
-        const drawX = enemy.x - 48; // shift for visuals
+
+        // offset so sprite foot roughly lines up with collision box
+        const drawX = enemy.x - 48;
         const drawY = enemy.y - 96;
 
-        ctx.translate(drawX + drawWidth/2, drawY + drawHeight/2);
+        // handle flipping
+        ctx.translate(drawX + drawWidth / 2, drawY + drawHeight / 2);
         if (!enemy.facingRight) {
             ctx.scale(-1, 1);
         }
 
+        // draw
         ctx.drawImage(
             sheet,
             sourceX,
             sourceY,
             SPRITE_SIZE,
             SPRITE_SIZE,
-            -drawWidth/2,
-            -drawHeight/2,
+            -drawWidth / 2,
+            -drawHeight / 2,
             drawWidth,
             drawHeight
         );

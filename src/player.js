@@ -39,7 +39,7 @@ export const player = {
     xp: 0,
     xpToNextLevel: 100,
     skillPoints: 0,
-
+    pickupRadius: 50,
     attackRange: 250,
 
     // Animation tracking
@@ -105,7 +105,7 @@ btnUpgradeRange.addEventListener('click', () => {
 btnUpgradeGarlic.addEventListener('click', () => {
     if (player.skillPoints > 0) {
         player.garlicRadius += 5;
-        player.garlicDPS += 1;
+        player.garlicDPS += 0.2;
         player.hasGarlic = true;
         player.skillPoints--;
         updateLevelUpUI();
@@ -296,13 +296,13 @@ export function drawPlayer(ctx) {
 
 // Called when the player kills an enemy
 export function onKillEnemy() {
-    const xpGain = 25;
-    gainXP(xpGain);
+    // const xpGain = 25;
+    // gainXP(xpGain);
     player.kills++;
 }
 
 // Gain XP and check for level up
-function gainXP(amount) {
+export function gainXP(amount) {
     player.xp += amount;
     while (player.xp >= player.xpToNextLevel) {
         player.xp -= player.xpToNextLevel;

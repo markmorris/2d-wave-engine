@@ -26,6 +26,7 @@ import {
 } from './collisions.js';
 import { drawFPS } from './utils.js';
 import {drawObstacles, spawnObstacles} from "./obstacles.js";
+import {drawGems, updateGems} from "./gems.js";
 
 // -- Grab canvas and context --
 const canvas = document.getElementById('gameCanvas');
@@ -84,6 +85,9 @@ function update(delta) {
     // Update player (movement, auto-shoot, etc.)
     updatePlayer(delta, keys, canvas);
 
+    // Update gems
+    updateGems();
+
     // Now update the camera to center on the player
     updateCamera(player);
 
@@ -137,6 +141,9 @@ function draw() {
 
     // Draw bullets
     drawBullets(ctx);
+
+    // Draw gems
+    drawGems(ctx);
 
     // Restore transform so UI/HUD stays fixed
     ctx.restore();
