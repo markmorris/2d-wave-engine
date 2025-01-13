@@ -135,12 +135,16 @@ export function updateEnemies(delta, player) {
             // Once we reach the last frame in the death animation
             // we remove the enemy from the array.
             if (enemy.frameIndex === DIE_FRAMES - 1 && enemy.frameTimer === 0) {
-                // meaning we just finished the last frame
+                // meaning we just finished the last frame of death animation
                 enemies.splice(i, 1);
 
                 playDeathSound();
 
-                gems.push(createGem(enemy.x, enemy.y, 25)); // 25 = xpValue, your choice
+                if (enemy.isBoss) {
+                    gems.push(createGem(enemy.x, enemy.y, 150, true));
+                } else {
+                    gems.push(createGem(enemy.x, enemy.y, 25));
+                }
             }
             continue; // skip the rest for this enemy
         }

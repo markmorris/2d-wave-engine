@@ -19,10 +19,10 @@ const btnUpgradeItemPickupRadius = document.getElementById('btnUpgradeItemPickup
 
 // Create Image objects
 const idleImage = new Image();
-idleImage.src = 'assets/idle.png'; // path to your idle sprite sheet
+idleImage.src = 'assets/idle.png';
 
 const walkImage = new Image();
-walkImage.src = 'assets/walk.png'; // path to your walk sprite sheet
+walkImage.src = 'assets/walk.png';
 
 // The player object
 export const player = {
