@@ -61,8 +61,9 @@
 </head>
 <body>
 
-<div>
-    <button style="position: absolute; top: 50%; left: 50%; z-index: 9999; transform: translate(-50%, -50%);" id="startBtn">Start Game</button>
+<div id="gameMenu" style="position: absolute; top: 50%; left: 50%; z-index: 9999; transform: translate(-50%, -50%);">
+    <img src="assets/logo.webp" alt="Logo" style="width: 100%; max-width: 300px;">
+    <button style="display: block; margin-top: 10px; width: 100%; background: rgba(0, 0, 0, 0.5); border: none; color: white; padding: 10px; cursor: pointer;" id="startBtn">Start Game</button>
 </div>
 
 <canvas id="gameCanvas" width="800" height="600" style="height: 100%;"></canvas>
@@ -93,9 +94,10 @@
     import { startGame } from './src/main.js';
 
     const startBtn = document.getElementById('startBtn');
+    const gameMenu = document.getElementById('gameMenu');
     startBtn.addEventListener('click', () => {
         startGame()
-        startBtn.style.display = 'none';
+        gameMenu.style.display = 'none';
     });
 </script>
 </body>
