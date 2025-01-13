@@ -3,13 +3,16 @@ import {gainXP, player} from "./player.js";
 
 export const gems = [];
 
+const gemImage = new Image();
+gemImage.src = 'assets/gem.png';  // e.g. 5 frames -> 640x128
+
 // Each gem might look like:
 export function createGem(x, y, expValue) {
     return {
         x,
         y,
         expValue,   // how much XP the gem gives
-        size: 16    // or 8, or any visual size you want
+        size: 32    // or 8, or any visual size you want
     };
 }
 
@@ -39,15 +42,19 @@ export function updateGems() {
 }
 
 export function drawGems(ctx) {
-    // 2) Draw each gem
     gems.forEach(gem => {
         ctx.save();
 
-        // For a simple shape, e.g. a circle:
-        ctx.fillStyle = 'blue';
-        ctx.beginPath();
-        ctx.arc(gem.x, gem.y, gem.size / 2, 0, Math.PI * 2);
-        ctx.fill();
+        // Draw the gem image at (gem.x, gem.y).
+        // Center it by offsetting half its size in both directions:
+        const halfSize = gem.size / 2;
+        ctx.drawImage(
+            gemImage,
+            gem.x - halfSize,
+            gem.y - halfSize,
+            gem.size,
+            gem.size
+        );
 
         ctx.restore();
     });
