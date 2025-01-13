@@ -4,7 +4,8 @@ import { isColliding } from './utils.js';
 export const enemies = [];
 import { MAP_WIDTH, MAP_HEIGHT } from './camera.js';
 import {player} from "./player.js";
-import {obstacles} from "./obstacles.js"; // <-- import map dimensions
+import {obstacles} from "./obstacles.js";
+import {playDeathSound} from "./sound.js"; // <-- import map dimensions
 
 // Example paths to your enemy sprite sheets
 // (same format as player, each 128x128 per frame, horizontal frames)
@@ -17,6 +18,13 @@ enemyWalkImage.src = 'assets/enemy_walk.png';  // e.g. 6 frames -> 768x128
 // NEW: Death sprite (4 frames across, 128x128 each => 512x128 total)
 const enemyDieImage = new Image();
 enemyDieImage.src = 'assets/enemy_die.png';
+
+// ----- BOSS Enemy Sprites ----- //
+const bossWalkImage = new Image();
+bossWalkImage.src = 'assets/boss_walk.png';    // e.g. same format, 6 frames -> 768x128?
+
+const bossDieImage = new Image();
+bossDieImage.src = 'assets/boss_die.png';      // e.g. 4 frames -> 512x128?
 
 // Constants for sprite frames
 const SPRITE_SIZE = 128;   // each frame is 128 wide, 128 tall
@@ -66,7 +74,41 @@ export function spawnWave(count, waveNumber) {
 
             // NEW: If the enemy is in 'die' state, we won't remove it
             // until the animation finishes. Also skip movement, etc.
-            isDying: false  // convenience flag if we want it
+            isDying: false,  // convenience flag if we want it
+
+            isBoss: false   // convenience flag if we want it
+        });
+    }
+
+    // 2) Every 5th wave, spawn a boss
+    if (waveNumber % 5 === 0) {
+        // We'll just spawn ONE boss. You can spawn more or a bigger boss if you want
+        const bossAngle = Math.random() * Math.PI * 2;
+        const bossSpawnX = cx + radius * Math.cos(bossAngle);
+        const bossSpawnY = cy + radius * Math.sin(bossAngle);
+
+        enemies.push({
+            x: bossSpawnX,
+            y: bossSpawnY,
+            width: 64,    // If you want bigger collision box
+            height: 64,   // for a boss
+            speed: 1.0,   // maybe slightly slower or can be faster
+
+            // Give the boss a large HP. E.g. 20 + waveNumber * 2
+            // Tweak as you like
+            hp: 150 + waveNumber * 2,
+
+            vx: 0,
+            vy: 0,
+            animationState: 'walk',
+            frameIndex: 0,
+            frameTimer: 0,
+            frameInterval: 10,
+            facingRight: true,
+            isDying: false,
+
+            // Flag to indicate it's a boss
+            isBoss: true
         });
     }
 }
@@ -97,6 +139,8 @@ export function updateEnemies(delta, player) {
             if (enemy.frameIndex === DIE_FRAMES - 1 && enemy.frameTimer === 0) {
                 // meaning we just finished the last frame
                 enemies.splice(i, 1);
+
+                playDeathSound();
             }
             continue; // skip the rest for this enemy
         }
@@ -225,21 +269,37 @@ export function drawEnemies(ctx) {
     enemies.forEach(enemy => {
         ctx.save();
 
+
+        // Decide which sheet to use
         let sheet;
-        let frames = 1; // default fallback
-        switch (enemy.animationState) {
-            case 'walk':
-                sheet = enemyWalkImage;
-                frames = WALK_FRAMES;
-                break;
-            case 'die':
-                sheet = enemyDieImage;
+        let frames = 1;
+
+        if (enemy.isBoss) {
+            // Boss logic
+            if (enemy.animationState === 'die') {
+                sheet = bossDieImage;
                 frames = DIE_FRAMES;
-                break;
-            default:
-                sheet = enemyIdleImage;
-                frames = IDLE_FRAMES;
-                break;
+            } else {
+                // e.g. 'walk' or 'idle'
+                sheet = bossWalkImage;
+                frames = WALK_FRAMES;
+            }
+        } else {
+            // Normal enemy
+            switch (enemy.animationState) {
+                case 'walk':
+                    sheet = enemyWalkImage;
+                    frames = WALK_FRAMES;
+                    break;
+                case 'die':
+                    sheet = enemyDieImage;
+                    frames = DIE_FRAMES;
+                    break;
+                default:
+                    sheet = enemyIdleImage;
+                    frames = IDLE_FRAMES;
+                    break;
+            }
         }
 
         const sourceX = enemy.frameIndex * SPRITE_SIZE;

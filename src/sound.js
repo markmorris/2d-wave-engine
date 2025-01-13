@@ -6,17 +6,20 @@
 const shootSfxPath = 'assets/sounds/shoot.wav';
 const damageSfxPath = 'assets/sounds/damage.wav';
 const bgMusicPath   = 'assets/music/main.mp3';
+const deathSfxPath  = 'assets/sounds/death.mp3';
 
 // Create Audio objects
 const shootSfx = new Audio(shootSfxPath);
 const damageSfx = new Audio(damageSfxPath);
 const bgMusic = new Audio(bgMusicPath);
+const deathSfx = new Audio(deathSfxPath);
 
 // Optional: Set volumes, loops, etc.
 bgMusic.loop = true;
-bgMusic.volume = 0.5;  // e.g. 50% volume
+bgMusic.volume = 0.3;  // e.g. 50% volume
 shootSfx.volume = 0.2;
 damageSfx.volume = 0.2;
+deathSfx.volume = 0.5;
 
 /**
  * Call this once (e.g., when the game starts or after user interaction)
@@ -43,8 +46,16 @@ export function playDamageSound() {
     damageSfx.play().catch(() => {});
 }
 
+/** Play the death SFX */
+export function playDeathSound() {
+    // Reset time so it can replay in quick succession
+    deathSfx.currentTime = 0;
+    deathSfx.play().catch(() => {});
+}
+
 /** (Optional) Stop / Pause the music if needed */
 export function stopMusic() {
     bgMusic.pause();
     bgMusic.currentTime = 0;
 }
+
