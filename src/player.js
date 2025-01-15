@@ -26,8 +26,8 @@ export const player = {
     width: 32,
     height: 32,
     speed: 5,
-    hp: 2,
-    maxHP: 2,
+    hp: 100,
+    maxHP: 100,
     kills: 0,
 
     level: 1,
