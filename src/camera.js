@@ -21,3 +21,7 @@ export function updateCamera(player) {
     camera.x = Math.max(0, Math.min(camera.x, MAP_WIDTH - camera.width));
     camera.y = Math.max(0, Math.min(camera.y, MAP_HEIGHT - camera.height));
 }
+
+export function getCamera() {
+    return camera;
+}

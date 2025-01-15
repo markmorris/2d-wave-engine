@@ -69,24 +69,23 @@
 <canvas id="gameCanvas" width="800" height="600" style="height: 100%;"></canvas>
 
 <!-- Level-Up Modal -->
-<div id="levelUpModal">
-    <h2>Level Up!</h2>
-    <p>You have <span id="skillPointsDisplay">0</span> points to spend.</p>
-
-    <h2>Player Upgrades</h2>
-    <button id="btnUpgradeMaxHP"><span>Increase Max HP <small>Increases HP by 10%</small></span></button>
-    <button id="btnUpgradeMove"><span>Increase Movement Speed <small>Increases Speed by 10%</small></span></button>
-    <button id="btnUpgradeItemPickupRadius"><span>Increase Item Pickup Radius <small>Increases Radius by 10%</small></span></button>
-
-    <h2>Projectile Upgrades</h2>
-    <button id="btnUpgradeAttack"><span>Increase Attack Speed <small>Increases Cooldown by 10%</small></span></button>
-    <button id="btnUpgradeAttackDamage"><span>Increase Attack Damage <small>Increases Damage by 10%</small></span></button>
-    <button id="btnUpgradeRange"><span>Increase Attack Range <small>Increases Radius by 10%</small></span></button>
-
-    <h2>Garlic Aura Upgrades</h2>
-    <button id="btnUpgradeGarlic"><span>Increase Garlic Aura <small>Increases Radius by 10%</small></span></button>
-    <button id="btnUpgradeGarlicAttack"><span>Increase Garlic Damage <small>Increases DPS by 20%</small></span></button>
+<div id="levelUpModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h2>Level Up!</h2>
+        <p>Choose an ability to acquire or upgrade:</p>
+        <button id="abilityOption1">Ability 1</button>
+        <button id="abilityOption2">Ability 2</button>
+    </div>
 </div>
+
+<!-- Abilities Display -->
+<div id="abilitiesDisplay">
+    <h3>Abilities</h3>
+    <ul id="abilitiesList">
+        <li>Wand (Level 1)</li>
+    </ul>
+</div>
+
 
 <script type="module" src="./src/main.js"></script>
 
@@ -100,5 +99,6 @@
         gameMenu.style.display = 'none';
     });
 </script>
+
 </body>
 </html>

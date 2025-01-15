@@ -2,7 +2,7 @@
 
 import { isColliding } from './utils.js';
 export const enemies = [];
-import { MAP_WIDTH, MAP_HEIGHT } from './camera.js';
+import {MAP_WIDTH, MAP_HEIGHT, getCamera} from './camera.js';
 import {player} from "./player.js";
 import {obstacles} from "./obstacles.js";
 import {playDeathSound} from "./sound.js";
@@ -35,80 +35,153 @@ const DIE_FRAMES  = 4;     // 4 frames for death
 const BOSS_WALK_FRAMES = 6;     // e.g., 6 frames for boss
 const BOSS_DIE_FRAMES  = 5;     // 4 frames for boss death
 
+const MAX_ENEMIES = 500; // Adjustable maximum number of enemies on screen
+const enemyPool = [];    // Pool to store recycled enemy objects
+
 /**
  * Spawns a wave of enemies in a radial pattern around the center of the *map*,
  * not just the 800x600 canvas.
  */
-export function spawnWave(count, waveNumber) {
-    // Center of the map
-    // const cx = MAP_WIDTH / 2;
-    // const cy = MAP_HEIGHT / 2;
+// enemy.js
 
+export function spawnWave(count, waveNumber) {
     const cx = player.x;
     const cy = player.y;
 
-    // Radius: half the diagonal of the map + buffer
-    // e.g. sqrt((3200/2)^2 + (3200/2)^2) ~= 2262 + some buffer
     const radius = Math.sqrt((1200 / 2) ** 2 + (1000 / 2) ** 2) + 50;
 
     for (let i = 0; i < count; i++) {
-        // Random angle [0..2π)
+        // Check if maximum enemies are reached
+        if (enemies.length >= MAX_ENEMIES) {
+            // Remove the oldest enemy (from the front of the array)
+            const oldEnemy = enemies.shift();
+            recycleEnemy(oldEnemy);
+        }
+
+        const enemy = getEnemy(); // Retrieves from pool or creates new
+
+        // Assign spawn position
         const angle = Math.random() * Math.PI * 2;
-        // Convert polar to Cartesian
         const spawnX = cx + radius * Math.cos(angle);
         const spawnY = cy + radius * Math.sin(angle);
 
-        enemies.push({
-            x: spawnX,
-            y: spawnY,
-            width: 32,
-            height: 32,
-            speed: (0.8 + waveNumber * 0.1) + Math.random() * 0.2,
-            hp: 1 + waveNumber * 0.2,
+        // Initialize enemy properties
+        enemy.x = spawnX;
+        enemy.y = spawnY;
+        enemy.speed = (0.8 + waveNumber * 0.1) + Math.random() * 0.2;
+        enemy.hp = 1 + waveNumber * 0.2;
+        enemy.vx = 0;
+        enemy.vy = 0;
+        enemy.animationState = 'walk';
+        enemy.frameIndex = 0;
+        enemy.frameTimer = 0;
+        enemy.facingRight = true;
+        enemy.isDying = false;
+        enemy.isBoss = false;
 
-            vx: 0,
-            vy: 0,
-
-            // --- Animation ---
-            animationState: 'walk',  // or 'idle'
-            frameIndex: 0,
-            frameTimer: 0,
-            frameInterval: 10,       // how fast to cycle frames
-            facingRight: true,        // we’ll flip if false
-            isDying: false,  // convenience flag if we want it
-            isBoss: false   // convenience flag if we want it
-        });
+        enemies.push(enemy);
     }
 
     // 2) Every 5th wave, spawn a boss
     if (waveNumber % 5 === 0) {
-        // We'll just spawn ONE boss. You can spawn more or a bigger boss if you want
+        // Ensure we don't exceed MAX_ENEMIES
+        if (enemies.length >= MAX_ENEMIES) {
+            const oldBoss = enemies.shift();
+            recycleEnemy(oldBoss);
+        }
+
+        const boss = getEnemy(true);
+
         const bossAngle = Math.random() * Math.PI * 2;
         const bossSpawnX = cx + radius * Math.cos(bossAngle);
         const bossSpawnY = cy + radius * Math.sin(bossAngle);
 
-        enemies.push({
-            x: bossSpawnX,
-            y: bossSpawnY,
-            width: 64,    // If you want bigger collision box
-            height: 64,   // for a boss
-            speed: 1.0,   // maybe slightly slower or can be faster
+        boss.x = bossSpawnX;
+        boss.y = bossSpawnY;
+        boss.speed = 1.0;
+        boss.hp = 150 + waveNumber * 2;
+        boss.vx = 0;
+        boss.vy = 0;
+        boss.animationState = 'walk';
+        boss.frameIndex = 0;
+        boss.frameTimer = 0;
+        boss.facingRight = true;
+        boss.isDying = false;
 
-            // Give the boss a large HP. E.g. 20 + waveNumber * 2
-            // Tweak as you like
-            hp: 150 + waveNumber * 2,
-
-            vx: 0,
-            vy: 0,
-            animationState: 'walk',
-            frameIndex: 0,
-            frameTimer: 0,
-            frameInterval: 10,
-            facingRight: true,
-            isDying: false,
-            isBoss: true
-        });
+        enemies.push(boss);
     }
+}
+
+// enemy.js
+
+/**
+ * Creates a new enemy object.
+ * @param {boolean} isBoss - Indicates if the enemy is a boss.
+ * @returns {Object} - New enemy object.
+ */
+function createNewEnemy(isBoss = false) {
+    return {
+        x: 0,
+        y: 0,
+        width: isBoss ? 64 : 32,    // Larger size for bosses
+        height: isBoss ? 64 : 32,
+        speed: 0,
+        hp: 0,
+        vx: 0,
+        vy: 0,
+        animationState: 'idle',
+        frameIndex: 0,
+        frameTimer: 0,
+        frameInterval: 10,
+        facingRight: true,
+        isDying: false,
+        isBoss: isBoss
+    };
+}
+
+/**
+ * Resets an enemy's properties to default values.
+ * @param {Object} enemy - Enemy object to reset.
+ */
+function resetEnemy(enemy) {
+    enemy.x = 0;
+    enemy.y = 0;
+    enemy.width = enemy.isBoss ? 64 : 32;
+    enemy.height = enemy.isBoss ? 64 : 32;
+    enemy.speed = 0;
+    enemy.hp = 0;
+    enemy.vx = 0;
+    enemy.vy = 0;
+    enemy.animationState = 'idle';
+    enemy.frameIndex = 0;
+    enemy.frameTimer = 0;
+    enemy.facingRight = true;
+    enemy.isDying = false;
+    // Note: isBoss should remain as isBoss
+}
+
+/**
+ * Retrieves an enemy from the pool or creates a new one if the pool is empty.
+ * @param {boolean} isBoss - Indicates if the enemy to retrieve is a boss.
+ * @returns {Object} - Enemy object ready to be initialized.
+ */
+function getEnemy(isBoss = false) {
+    if (enemyPool.length > 0) {
+        const enemy = enemyPool.pop();
+        enemy.isBoss = isBoss;
+        resetEnemy(enemy); // Ensure it's reset before reuse
+        return enemy;
+    }
+    return createNewEnemy(isBoss);
+}
+
+/**
+ * Returns an enemy to the pool after resetting its properties.
+ * @param {Object} enemy - Enemy object to return to the pool.
+ */
+function recycleEnemy(enemy) {
+    resetEnemy(enemy);
+    enemyPool.push(enemy);
 }
 
 /**
@@ -124,7 +197,6 @@ export function updateEnemies(delta, player) {
 
         // If the enemy is dying, skip normal movement
         if (enemy.animationState === 'die') {
-            // Optionally reduce knockback, speed, etc.
             enemy.vx = 0;
             enemy.vy = 0;
             enemy.speed = 0;
@@ -133,31 +205,36 @@ export function updateEnemies(delta, player) {
             updateEnemyAnimation(enemy);
 
             // Once we reach the last frame in the death animation
-            // we remove the enemy from the array.
-            if (enemy.frameIndex === DIE_FRAMES - 1 && enemy.frameTimer === 0) {
-                // meaning we just finished the last frame of death animation
-                enemies.splice(i, 1);
-
+            if (enemy.frameIndex === (enemy.isBoss ? BOSS_DIE_FRAMES - 1 : DIE_FRAMES - 1) && enemy.frameTimer === 0) {
+                // Play death sound
                 playDeathSound();
 
+                // Create gems
                 if (enemy.isBoss) {
                     gems.push(createGem(enemy.x, enemy.y, 150, true));
                 } else {
                     gems.push(createGem(enemy.x, enemy.y, 25));
                 }
+
+                // Remove the enemy from the active list and add to the pool
+                enemies.splice(i, 1);
+                recycleEnemy(enemy);
+
+                continue; // Skip the rest of the loop for this enemy
             }
-            continue; // skip the rest for this enemy
+            continue; // Skip further updates for dying enemies
         }
 
-        // else normal AI for living enemies
+        // Normal enemy AI
         const oldX = enemy.x;
         const oldY = enemy.y;
 
         // Move toward player
         const dx = player.x - enemy.x;
         const dy = player.y - enemy.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > 0) {
+        const distSq = dx * dx + dy * dy;
+        if (distSq > 0) {
+            const dist = Math.sqrt(distSq);
             enemy.x += (dx / dist) * enemy.speed;
             enemy.y += (dy / dist) * enemy.speed;
         }
@@ -168,13 +245,13 @@ export function updateEnemies(delta, player) {
         // Apply knockback velocity
         enemy.x += enemy.vx;
         enemy.y += enemy.vy;
-        // friction
+        // Apply friction
         enemy.vx *= 0.8;
         enemy.vy *= 0.8;
 
         updateEnemyAnimation(enemy);
 
-        // obstacle collisions
+        // Obstacle collisions
         if (obstacles) {
             for (const obs of obstacles) {
                 if (isColliding(enemy, obs)) {
@@ -184,18 +261,8 @@ export function updateEnemies(delta, player) {
                 }
             }
         }
-
-        // Prevent enemies overlapping each other
-        for (let m = 0; m < enemies.length - 1; m++) {
-            for (let n = m + 1; n < enemies.length; n++) {
-                if (isColliding(enemies[m], enemies[n])) {
-                    separate(enemies[m], enemies[n]);
-                }
-            }
-        }
     }
 }
-
 
 function updateEnemyAnimation(enemy) {
     enemy.frameTimer++;
@@ -283,7 +350,20 @@ function getOverlap(e1, e2) {
  * Draw all enemies, picking boss or normal sprites.
  */
 export function drawEnemies(ctx) {
+    const camera = getCamera(); // Implement a function to retrieve camera position
+    const buffer = 100; // Buffer area around the screen to preload enemies
+
     enemies.forEach(enemy => {
+       // Culling: Check if enemy is within the visible area plus buffer
+       if (
+           enemy.x + enemy.width < camera.x - buffer ||
+           enemy.x - enemy.width > camera.x + buffer.width + buffer ||
+           enemy.y + enemy.height < camera.y - buffer ||
+           enemy.y - enemy.height > camera.y + buffer.height + buffer
+       ) {
+           return; // Skip drawing this enemy
+       }
+
         ctx.save();
 
         let sheet; // which image
@@ -346,7 +426,6 @@ export function drawEnemies(ctx) {
         ctx.restore();
     });
 }
-
 
 
 /**
