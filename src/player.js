@@ -8,7 +8,9 @@ import { obstacles } from "./obstacles.js";
 import { WandAbility } from './abilities/WandAbility.js';
 import { GarlicAbility } from './abilities/GarlicAbility.js';
 import { ShieldAbility } from "./abilities/ShieldAbility.js";
-import { AllAbilities } from './abilities/AbilityRegistry.js'; // Import the registry
+import { OrbAbility } from "./abilities/OrbAbility.js";
+import { AllAbilities } from './abilities/AbilityRegistry.js';
+
 
 // References to the level-up modal
 const levelUpModal = document.getElementById('levelUpModal');
@@ -65,6 +67,12 @@ export const player = {
         shieldAbility.unlocked = false; // Set unlocked to false explicitly
         // shieldAbility.init(this);
         this.abilities.push(shieldAbility);
+
+        // Initialize ShieldAbility (initially locked)
+        const orbAbility = new OrbAbility();
+        orbAbility.unlocked = false; // Set unlocked to false explicitly
+        // shieldAbility.init(this);
+        this.abilities.push(orbAbility);
     }
 };
 
@@ -142,6 +150,7 @@ export function updatePlayer(delta, keys, canvas) {
 
     // Update abilities
     player.abilities.forEach(ability => {
+
         ability.update(player, enemies, delta);
     });
 
@@ -188,47 +197,61 @@ export function drawPlayer(ctx) {
 
     ctx.restore();
 
-    // Draw ability-related visuals, e.g., Garlic Aura
+    // Draw abilities
+    // for (const abilityName in this.abilities) {
+    //     const ability = this.abilities[abilityName];
+    //     if (ability.unlocked) {
+    //         ability.draw(ctx, this);
+    //     }
+    // }
+
     player.abilities.forEach(ability => {
         if (ability.unlocked) {
-
-            if (ability.abilityName === 'Garlic') {
-                // Existing Garlic Aura drawing logic
-                ctx.save();
-                ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)'; // yellowish
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(
-                    player.x + player.width / 2,
-                    player.y + player.height / 2,
-                    ability.garlicRadius,
-                    0,
-                    Math.PI * 2
-                );
-                ctx.stroke();
-                ctx.restore();
-            }
-
-            if (ability.abilityName === 'Shield' && ability.shieldActive) {
-                // Draw Shield Aura
-                ctx.save();
-                ctx.strokeStyle = 'rgba(0, 0, 255, 0.6)'; // blueish
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(
-                    player.x + player.width / 2,
-                    player.y + player.height / 2,
-                    150, // Example radius; adjust as needed
-                    0,
-                    Math.PI * 2
-                );
-                ctx.stroke();
-                ctx.restore();
-            }
-
-            // Add more passive ability visuals as needed
+            ability.draw(ctx, player);
         }
     });
+
+    // Draw ability-related visuals, e.g., Garlic Aura
+    // player.abilities.forEach(ability => {
+    //     if (ability.unlocked) {
+    //
+    //         if (ability.abilityName === 'Garlic') {
+    //             // Existing Garlic Aura drawing logic
+    //             ctx.save();
+    //             ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)'; // yellowish
+    //             ctx.lineWidth = 2;
+    //             ctx.beginPath();
+    //             ctx.arc(
+    //                 player.x + player.width / 2,
+    //                 player.y + player.height / 2,
+    //                 ability.garlicRadius,
+    //                 0,
+    //                 Math.PI * 2
+    //             );
+    //             ctx.stroke();
+    //             ctx.restore();
+    //         }
+    //
+    //         if (ability.abilityName === 'Shield' && ability.shieldActive) {
+    //             // Draw Shield Aura
+    //             ctx.save();
+    //             ctx.strokeStyle = 'rgba(0, 0, 255, 0.6)'; // blueish
+    //             ctx.lineWidth = 3;
+    //             ctx.beginPath();
+    //             ctx.arc(
+    //                 player.x + player.width / 2,
+    //                 player.y + player.height / 2,
+    //                 150, // Example radius; adjust as needed
+    //                 0,
+    //                 Math.PI * 2
+    //             );
+    //             ctx.stroke();
+    //             ctx.restore();
+    //         }
+    //
+    //         // Add more passive ability visuals as needed
+    //     }
+    // });
 
     // Draw player pickup radius
     ctx.save();

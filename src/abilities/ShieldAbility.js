@@ -2,6 +2,8 @@
 
 import { Ability } from './Ability.js';
 
+
+
 export class ShieldAbility extends Ability {
     static abilityName = 'Shield';
     constructor() {
@@ -39,6 +41,11 @@ export class ShieldAbility extends Ability {
             }
         }
     }
+
+    // Draw the shield
+    // draw(ctx, player) {
+    //
+    // }
 
     // Method to upgrade shield properties
     upgradeDuration(factor) {

@@ -1,0 +1,46 @@
+{
+  "waves": [
+    {
+      "waveNumber": 1,
+      "duration": 60,
+      "enemyType": "basic",
+      "spawnInterval": 1,
+      "maxEnemies": 50
+    },
+    {
+      "waveNumber": 2,
+      "duration": 120,
+      "enemyType": "basic",
+      "spawnInterval": 0.5,
+      "maxEnemies": 100
+    },
+    {
+      "waveNumber": 3,
+      "duration": 60,
+      "enemyType": "advanced",
+      "spawnInterval": 0.3,
+      "maxEnemies": 300
+    },
+    {
+      "waveNumber": 4,
+      "duration": 90,
+      "enemyType": "advanced",
+      "spawnInterval": 0.25,
+      "maxEnemies": 350
+    },
+    {
+      "waveNumber": 5,
+      "duration": 10,
+      "enemyType": "boss",
+      "spawnInterval": 0,
+      "maxEnemies": 4
+    },
+    {
+      "waveNumber": 6,
+      "duration": 180,
+      "enemyType": "basic",
+      "spawnInterval": 0,
+      "maxEnemies": 250
+    }
+  ]
+}

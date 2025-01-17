@@ -18,11 +18,13 @@ export function createGem(x, y, expValue, isDiamond) {
         size: 32,    // or 8, or any visual size you want
         isDiamond: isDiamond,
         isPulled: false, // whether gem is currently flying toward the player
-        pullSpeed: 5     // how fast it flies toward the player
+        pullSpeed: 5,     // initial pull speed
+        currentSpeed: 5,  // current speed, initialized to pullSpeed
+        pullAcceleration: 20 // acceleration in units per second squared (adjust as needed)
     };
 }
 
-export function updateGems() {
+export function updateGems(delta) { // Ensure 'delta' is passed correctly
     for (let i = gems.length - 1; i >= 0; i--) {
         const gem = gems[i];
 
@@ -38,14 +40,16 @@ export function updateGems() {
         }
 
         if (gem.isPulled) {
-            // 2) Move gem toward player
-            //    We'll normalize (dx, dy) and multiply by gem.pullSpeed
+            // 2) Accelerate the gem's speed over time
+            gem.currentSpeed += gem.pullAcceleration * (delta / 1000); // delta is in ms
+
+            // Normalize direction
             if (dist > 0) {
                 const nx = dx / dist;
                 const ny = dy / dist;
-                // Move the gem
-                gem.x += nx * gem.pullSpeed;
-                gem.y += ny * gem.pullSpeed;
+                // Move the gem with the accelerated speed
+                gem.x += nx * gem.currentSpeed;
+                gem.y += ny * gem.currentSpeed;
             }
         }
 
@@ -60,6 +64,7 @@ export function updateGems() {
         }
     }
 }
+
 
 export function drawGems(ctx) {
     gems.forEach(gem => {

@@ -70,33 +70,35 @@ export class WandAbility extends Ability {
     applyUpgradeEffect() {
         switch (this.level) {
             case 2:
-                this.attackCooldown *= 0.95; // Reduce cooldown by 5%
+                this.attackCooldown *= 0.90;
                 break;
             case 3:
-                this.attackDamage *= 1.2; // Increase damage by 20%
+                this.attackDamage *= 1.2;
                 break;
             case 4:
-                this.attackCooldown *= 0.95;
+                this.attackCooldown *= 0.90;
                 break;
             case 5:
                 this.attackDamage *= 1.2;
+                this.attackRange *= 1.25;
                 break;
             // Continue up to level 10
             case 6:
-                this.attackCooldown *= 0.95;
+                this.attackCooldown *= 0.90;
                 break;
             case 7:
-                this.attackDamage *= 1.2;
+                this.attackDamage *= 1.3;
                 break;
             case 8:
-                this.attackCooldown *= 0.95;
+                this.attackCooldown *= 0.90;
                 break;
             case 9:
-                this.attackDamage *= 1.2;
+                this.attackDamage *= 1.3;
                 break;
             case 10:
-                this.attackCooldown *= 0.95;
-                this.attackDamage *= 1.2;
+                this.attackCooldown *= 0.80;
+                this.attackDamage *= 1.5;
+                this.attackRange *= 1.5;
                 break;
             default:
                 break;

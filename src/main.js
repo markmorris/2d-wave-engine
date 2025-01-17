@@ -1,32 +1,18 @@
 /******************************************************
- * main.js - Example with a 60 FPS cap
+ * main.js - Updated with WaveManager Integration and Image Loading
  ******************************************************/
-import { keys, setupInput } from './input.js';
-import { initAudio } from './sound.js';
+import {keys, setupInput} from './input.js';
+import {initAudio} from './sound.js';
 import {camera, MAP_HEIGHT, MAP_WIDTH, updateCamera} from './camera.js';
-import {
-    player,
-    updatePlayer,
-    drawPlayer
-} from './player.js';
-import {
-    enemies,
-    spawnWave,
-    updateEnemies,
-    drawEnemies
-} from './enemy.js';
-import {
-    bullets,
-    updateBullets,
-    drawBullets
-} from './bullet.js';
-import {
-    checkEnemyPlayerCollisions,
-    checkBulletEnemyCollisions
-} from './collisions.js';
-import { drawFPS } from './utils.js';
+import {drawPlayer, player, updatePlayer} from './player.js';
+import {drawEnemies, enemies, imagesPromise, updateEnemies} from './enemy.js'; // Import imagesPromise
+import {bullets, drawBullets, updateBullets} from './bullet.js';
+import {checkBulletEnemyCollisions, checkEnemyPlayerCollisions} from './collisions.js';
+import {drawFPS} from './utils.js';
 import {drawObstacles, spawnObstacles} from "./obstacles.js";
 import {drawGems, updateGems} from "./gems.js";
+import {WaveManager} from './waveManager.js'; // Import WaveManager
+import {drawUI} from './ui.js'; // For HUD and UI elements
 
 // -- Grab canvas and context --
 const canvas = document.getElementById('gameCanvas');
@@ -39,19 +25,34 @@ let floorPattern = null;
 // -- For normal FPS tracking (display only) --
 let fps = 0;
 
-// -- Wave info --
-let waveNumber = 1;
-let enemiesToSpawn = 12;
-const timeBetweenWaves = 10000; // e.g. 30 seconds
-let lastWaveTime = 0;
+// -- Initialize WaveManager
+let waveManager = null;
 
-// Wait until the image is loaded before creating the pattern
+// Function to load JSON (assuming waves.json is accessible)
+async function loadWaveConfig() {
+    try {
+        const response = await fetch('/data/waves.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to load waves configuration:', error);
+        return { waves: [] }; // Return empty waves to prevent errors
+    }
+}
+
+// Wait until the floor tile image is loaded before creating the pattern
 floorTile.onload = () => {
-    // We'll need a canvas or a context to call createPattern
+    // Create the pattern using a temporary canvas
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
 
-    // create the pattern
+    // Assuming floorTile is 32x32, set the tempCanvas size accordingly
+    // tempCanvas.width = floorTile.width;
+    // tempCanvas.height = floorTile.height;
+
+    // tempCtx.drawImage(floorTile, 0, 0);
     floorPattern = tempCtx.createPattern(floorTile, 'repeat');
 };
 
@@ -67,26 +68,53 @@ export function resetLastTime() {
     lastFrameTime = performance.now();
 }
 
-export function startGame()
-{
+/**
+ * Initializes and starts the game.
+ */
+export async function startGame() {
     initAudio();
     setupInput();
     spawnObstacles(30); // e.g. 30 random blocks
-    spawnWave(enemiesToSpawn, waveNumber);
-    lastWaveTime = performance.now();      // mark time
 
-    isPaused = false;
+    // Wait for all enemy images to load
+    try {
+        await imagesPromise;
+        console.log('All enemy images loaded successfully.');
+    } catch (error) {
+        console.error('Error loading enemy images:', error);
+        alert('Failed to load game assets. Please try reloading the page.');
+        return;
+    }
+
+    // Load wave configurations
+    const wavesConfig = await loadWaveConfig();
+    if (wavesConfig.waves.length === 0) {
+        console.error('No waves defined in waves.json. Game cannot start.');
+        alert('No waves defined. Please check the waves configuration.');
+        return;
+    }
+
+    // Initialize WaveManager with the loaded configuration
+    waveManager = new WaveManager(wavesConfig);
+
+    // Start the first wave
+    waveManager.startNextWave();
+
     resetLastTime();
+    isPaused = false;
     requestAnimationFrame(gameLoop);
 }
 
 // -- Our main update logic --
 function update(delta) {
+    // Update WaveManager
+    waveManager.update(delta, player);
+
     // Update player (movement, auto-shoot, etc.)
     updatePlayer(delta, keys, canvas);
 
     // Update gems
-    updateGems();
+    updateGems(delta);
 
     // Now update the camera to center on the player
     updateCamera(player);
@@ -105,20 +133,12 @@ function update(delta) {
 
     // Check collisions: bullets vs. enemies
     checkBulletEnemyCollisions(bullets, enemies, player);
-
-    const now = performance.now();
-    if (enemies.length === 0 || now - lastWaveTime >= timeBetweenWaves) {
-        waveNumber++;
-        enemiesToSpawn++;
-        spawnWave(enemiesToSpawn, waveNumber);
-        lastWaveTime = now;
-    }
 }
 
 // -- Our main draw logic --
 function draw() {
-    const now = performance.now();
-    const timeLeft = Math.max(0, timeBetweenWaves - (now - lastWaveTime));
+    // Calculate remaining time for the current wave
+    const timeLeft = Math.max(0, waveManager.waveTimer); // waveTimer is in seconds
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -128,42 +148,31 @@ function draw() {
     // Apply negative camera offset, so camera.x/camera.y is the top-left
     ctx.translate(-camera.x, -camera.y);
 
-    // 1) Draw the floor (3200x3200) using the pattern
+    // 1) Draw the floor (using the pattern)
     drawFloor(ctx);
 
+    // 2) Draw obstacles
     drawObstacles(ctx);
 
-    // Draw player
+    // 3) Draw player
     drawPlayer(ctx);
 
-    // Draw enemies
+    // 4) Draw enemies
     drawEnemies(ctx);
 
-    // Draw bullets
+    // 5) Draw bullets
     drawBullets(ctx);
 
-    // Draw gems
+    // 6) Draw gems
     drawGems(ctx);
 
     // Restore transform so UI/HUD stays fixed
     ctx.restore();
 
-    // HUD
-    ctx.fillStyle = 'black';
-    ctx.font = '16px monospace';
-    ctx.fillText(`HP: ${player.hp}/${player.maxHP}`, 10, 40);
-    ctx.fillText(`Wave: ${waveNumber}`, 10, 60);
-    ctx.fillText(`Kills: ${player.kills}`, 10, 80);
-    ctx.fillText(`Lvl: ${player.level} (XP: ${player.xp}/${player.xpToNextLevel})`, 10, 100);
-    ctx.fillText(`SkillPts: ${player.skillPoints}`, 10, 120);
-    ctx.fillText(`Attack Speed: ${player.attackCooldown}ms`, 10, 140);
-    ctx.fillText(`Attack Range: ${player.attackRange}`, 10, 160);
-    ctx.fillText(`Attack Damage: ${player.attackDamage}`, 10, 180);
-    ctx.fillText(`Garlic Aura: ${player.garlicRadius}`, 10, 200);
-    ctx.fillText(`Garlic DPS: ${player.garlicDPS}`, 10, 220);
-    ctx.fillText(`Next Wave in: ${Math.ceil(timeLeft / 1000)}s`, 10, 240);
+    // 7) HUD and UI
+    drawUI(ctx, waveManager, fps);
 
-    // Display current FPS
+    // 8) Display current FPS
     drawFPS(ctx, fps, 10, 20);
 }
 
@@ -211,5 +220,5 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
-// -- Start the loop --
-// requestAnimationFrame(gameLoop);
+// -- Start the game loop --
+// initGame();

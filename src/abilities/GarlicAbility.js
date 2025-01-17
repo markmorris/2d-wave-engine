@@ -18,23 +18,31 @@ export class GarlicAbility extends Ability {
     }
 
     update(player, enemies, delta) {
+        console.log('Update Garlic: ', this.unlocked)
+
         if (!this.unlocked) return;
 
         this.garlicTickTimer += delta;
+        console.log('Garlic: ', this.garlicRadius)
 
         if (this.garlicTickTimer >= this.garlicTickInterval) {
             this.garlicTickTimer = 0;
             const damageThisTick = this.garlicDPS * (this.garlicTickInterval / 1000);
 
-            enemies.forEach((enemy) => {
-                if (enemy.isDying) return;
+            for (const enemy of enemies) {
+                console.log('Enemy: ', enemy.isDying)
+                if (enemy.isDying) continue; // Skips to the next enemy
 
                 const dx = enemy.x - player.x;
                 const dy = enemy.y - player.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
+                console.log('Dist: ', dist)
+
                 if (dist <= this.garlicRadius) {
                     enemy.hp -= damageThisTick;
+
+                    console.log('Damage NPC: ', damageThisTick)
 
                     if (enemy.hp <= 0) {
                         enemy.animationState = 'die';
@@ -47,7 +55,7 @@ export class GarlicAbility extends Ability {
                         enemy.vy = (dy / dist) * 3;
                     }
                 }
-            });
+            }
         }
     }
 
@@ -73,19 +81,18 @@ export class GarlicAbility extends Ability {
         // Define what each level upgrade does
         switch (this.level) {
             case 2:
-                this.garlicRadius *= 1.1; // Increase radius by 10%
+                this.garlicRadius *= 1.1;
                 break;
             case 3:
-                this.garlicDPS *= 1.2; // Increase DPS by 20%
+                this.garlicDPS *= 1.2;
                 break;
             case 4:
                 this.garlicRadius *= 1.1;
                 break;
             case 5:
                 this.garlicDPS *= 1.2;
+                this.garlicTickInterval *= 0.95;
                 break;
-            // Continue up to level 10
-            // Example:
             case 6:
                 this.garlicRadius *= 1.1;
                 break;
@@ -93,15 +100,15 @@ export class GarlicAbility extends Ability {
                 this.garlicDPS *= 1.2;
                 break;
             case 8:
-                this.garlicRadius *= 1.1;
+                this.garlicRadius *= 1.2;
                 break;
             case 9:
                 this.garlicDPS *= 1.2;
                 break;
             case 10:
-                // Max level: perhaps add a final bonus
-                this.garlicRadius *= 1.1;
-                this.garlicDPS *= 1.2;
+                this.garlicRadius *= 1.5;
+                this.garlicDPS *= 1.5;
+                this.garlicTickInterval *= 0.90;
                 break;
             default:
                 break;
