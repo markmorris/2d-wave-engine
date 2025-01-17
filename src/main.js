@@ -19,7 +19,7 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 const floorTile = new Image();
-floorTile.src = 'assets/floor.jpg'; // path to your 32x32 tile
+floorTile.src = 'assets/grass.png'; // path to your 32x32 tile
 let floorPattern = null;
 
 // -- For normal FPS tracking (display only) --

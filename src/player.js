@@ -10,6 +10,7 @@ import { GarlicAbility } from './abilities/GarlicAbility.js';
 import { ShieldAbility } from "./abilities/ShieldAbility.js";
 import { OrbAbility } from "./abilities/OrbAbility.js";
 import { AllAbilities } from './abilities/AbilityRegistry.js';
+import { ChaosRiftsAbility } from "./abilities/ChaosRiftsAbility.js";
 
 
 // References to the level-up modal
@@ -73,6 +74,11 @@ export const player = {
         orbAbility.unlocked = false; // Set unlocked to false explicitly
         // shieldAbility.init(this);
         this.abilities.push(orbAbility);
+
+        // Initialize ChaosRiftsAbility
+        const chaosRiftsAbility = new ChaosRiftsAbility();
+        chaosRiftsAbility.unlocked = false; // Set unlocked to false explicitly
+        this.abilities.push(chaosRiftsAbility);
     }
 };
 

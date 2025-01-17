@@ -59,3 +59,10 @@ export function stopMusic() {
     bgMusic.currentTime = 0;
 }
 
+export function playRiftSpawnSound() {
+    playDamageSound();
+}
+
+export function playRiftDamageSound() {
+    playDamageSound()
+}
